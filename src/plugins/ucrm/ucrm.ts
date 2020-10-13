@@ -1,0 +1,244 @@
+import { Tools } from '@bettercorp/tools/lib/Tools';
+import { IServerConfig, webRequest as CWR } from '../../weblib';
+import moment = require('moment');
+
+export class UCRM implements IUCRM {
+  private ServerConfig;
+  constructor(server: IServerConfig) {
+    this.ServerConfig = server;
+  }
+
+  private webRequest (path: string, method: string, params: Object | undefined = undefined, data: Object | undefined = undefined, additionalProps: Object | undefined = undefined) {
+    return CWR(this.ServerConfig, '/crm/api/v1.0', path, method, params, data, additionalProps);
+  }
+
+  addNewServiceForClient (service: UCRM_Service, clientId: number): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      self.webRequest(`/clients/${clientId}/services`, 'POST', undefined, service).then(resolve).catch(reject);
+    });
+  }
+  addNewClient (client: UCRM_Client): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      self.webRequest(`/clients`, 'POST', undefined, client).then(resolve).catch(reject);
+    });
+  }
+  getPayments (clientId?: Number): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/payments${clientId !== undefined ? `?clientId=${clientId}&limit=10000` : '?limit=10000'}`, 'GET').then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+  getPaymentMethods (): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/payment-methods`, 'GET').then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+  getInvoicePdf (invoiceId: number, clientId: Number): Promise<any> {
+    throw new Error('Method not implemented.');
+    // return new Promise((resolve, reject) => {
+    //   getInvoices(invoiceId, clientId).then((invoiceObj: any) => {
+    //     if (invoiceObj.clientId !== clientId)
+    //       return reject('NO AUTH');
+    //     self.webRequest(`/invoices/${invoiceId}/pdf`, 'GET', undefined, undefined, {
+    //       responseType: 'blob'
+    //     }).then(resolve).catch(reject);
+    //   }).catch(reject);
+    // });
+  }
+  getServices (serviceId?: Number, clientId?: Number): Promise<any[]> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      self.webRequest((clientId !== undefined && clientId !== null && (serviceId === undefined || serviceId === null) ? `/clients/services?clientId=${clientId}&limit=10000` : `/clients/services${serviceId !== undefined && serviceId !== null ? `/${serviceId}?limit=10000` : '?limit=10000'}`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+    });
+  }
+  getServiceSurcharges (serviceId: number): Promise<any[]> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      self.webRequest(`/clients/services/${serviceId}/service-surcharges`, 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+    });
+  }
+  getInvoices (invoiceId?: number, clientId?: Number): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      self.webRequest((clientId !== undefined && clientId !== null && (invoiceId === undefined || invoiceId === null) ? `/invoices?clientId=${clientId}&limit=10000` : `/invoices${invoiceId !== undefined && invoiceId !== null ? `/${invoiceId}?limit=10000` : '?limit=10000'}`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+    });
+  }
+  getClient (id?: Number, emailOrPhoneNumber?: String): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      if (emailOrPhoneNumber === undefined || emailOrPhoneNumber === null)
+        return self.webRequest(`/clients${id ? `/${id}` : '?limit=10000'}`, 'GET').then(x => resolve(x as Array<any> | any)).catch(reject);
+      let tempEmailOrPhone = `${emailOrPhoneNumber}`.toLowerCase();
+      return self.webRequest(`/clients?limit=10000`, 'GET').then(async (x) => {
+        for (let clientObj of (x as any[])) {
+          let clientContacts = await self.webRequest(`/clients/${clientObj.id}/contacts`, 'GET');
+          for (let contactObj of (clientContacts as any[])) {
+            if (contactObj.email !== undefined && contactObj.email !== null && `${contactObj.email}`.toLowerCase() === tempEmailOrPhone) {
+              return resolve(clientObj);
+            }
+            if (contactObj.phone !== undefined && contactObj.phone !== null && `${contactObj.phone}`.toLowerCase() === tempEmailOrPhone) {
+              return resolve(clientObj);
+            }
+          }
+        }
+        resolve(null);
+      }).catch(reject);
+    });
+  }
+  setClient (id: Number, clientObj: any): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/clients/${id}`, 'PATCH', undefined, clientObj).then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+  addPayment (clientId: Number, methodId: string, amount: number, note: string, invoiceIds?: number[], applyToInvoicesAutomatically?: boolean, userId?: number, additionalProps?: any): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      let sendObj: any = {
+        clientId,
+        amount,
+        currencyCode: 'ZAR',
+        note,
+        invoiceIds
+      };
+      sendObj.methodId = methodId;
+      if (!Tools.isNullOrUndefined(additionalProps)) {
+        if (!Tools.isNullOrUndefined(additionalProps.providerName))
+          sendObj.providerName = additionalProps.providerName;
+        if (!Tools.isNullOrUndefined(additionalProps.providerPaymentId))
+          sendObj.providerPaymentId = additionalProps.providerPaymentId;
+        sendObj.providerPaymentTime = additionalProps.providerPaymentTime || moment().format('DD/MM/YYYY HH:mm');
+      } else {
+        sendObj.providerPaymentTime = moment().format('DD/MM/YYYY HH:mm');
+      }
+      return self.webRequest(`/payments`, 'POST', undefined, sendObj).then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+  getClientBankAccount (id?: Number, clientId?: Number): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(id !== undefined ? `/clients/bank-accounts/${id}` : `/clients/${clientId}/bank-accounts`, 'GET').then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+  addClientBankAccount (clientId: Number, obj: any): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/clients/${clientId}/bank-accounts`, 'POST', undefined, obj).then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+}
+
+export interface IUCRM {
+  addNewServiceForClient (service: UCRM_Service, clientId: number): Promise<any>;
+  addNewClient (client: UCRM_Client): Promise<any>;
+  getPayments (clientId?: Number): Promise<Array<any> | any>;
+  getPaymentMethods (): Promise<Array<any> | any>;
+  getInvoicePdf (invoiceId: number, clientId: Number): Promise<any>;
+  getServices (serviceId?: Number, clientId?: Number): Promise<Array<any>>;
+  getServiceSurcharges (serviceId: number): Promise<Array<any>>;
+  getInvoices (invoiceId?: number, clientId?: Number): Promise<Array<any> | any>;
+  getClient (id?: Number, emailOrPhoneNumber?: String): Promise<Array<any> | any>;
+  setClient (id: Number, clientObj: any): Promise<Array<any> | any>;
+  addPayment (clientId: Number, methodId: string, amount: number, note: string, invoiceIds?: Array<number>, applyToInvoicesAutomatically?: boolean, userId?: number, additionalProps?: any): Promise<Array<any> | any>;
+  getClientBankAccount (id?: Number, clientId?: Number): Promise<Array<any> | any>;
+  addClientBankAccount (clientId: Number, obj: any): Promise<Array<any> | any>;
+}
+
+export class UCRM_Service {
+  public servicePlanId: number | undefined = undefined;
+  public servicePlanPeriodId: number | undefined = undefined;
+  public activeFrom: Date | undefined = undefined;
+  public activeTo: Date | undefined = undefined;
+  public name: string | undefined = undefined;
+  public price: number | undefined = undefined;
+  public note: string | undefined = undefined;
+  public invoicingStart: Date | undefined = undefined;
+  public invoicingPeriodType: UCRM_Service_InvoicingPeriodType = UCRM_Service_InvoicingPeriodType.Forwards;
+  public invoicingPeriodStartDay: number = 1;
+  public nextInvoicingDayAdjustment: number | undefined = undefined;
+  public invoicingProratedSeparately: boolean = true;
+  public invoicingSeparately: boolean = false;
+  public sendEmailsAutomatically: boolean = true;
+  public useCreditAutomatically: boolean = true;
+  public invoiceLabel: string | undefined = undefined;
+  public street1: string | undefined = undefined;
+  public street2: string | undefined = undefined;
+  public city: string | undefined = undefined;
+  public countryId: number | undefined = undefined;
+  public stateId: number | undefined = undefined;
+  public zipCode: string | undefined = undefined;
+  public addressGpsLat: number | undefined = undefined;
+  public addressGpsLon: number | undefined = undefined;
+  public contractId: string | undefined = undefined;
+  public contractLengthType: UCRM_Service_ContractLengthType = UCRM_Service_ContractLengthType.OpenEndContact;
+  public minimumContractLengthMonths: number = 12;
+  public contractEndDate: Date | undefined = undefined;
+  public discountType: UCRM_Service_DiscountType = UCRM_Service_DiscountType.NoDiscount;
+  public discountValue: number | undefined = undefined;
+  public discountInvoiceLabel: string | undefined = undefined;
+  public discountFrom: Date | undefined = undefined;
+  public discountTo: Date | undefined = undefined;
+  public tax1Id: number | undefined = undefined;
+  public tax2Id: number | undefined = undefined;
+  public tax3Id: number | undefined = undefined;
+  public fccBlockId: string | undefined = undefined;
+  public isQuoted: boolean = true;
+}
+export class UCRM_Client_Contact {
+  public email: string | undefined = undefined;
+  public phone: string | undefined = undefined;
+  public name: string | undefined = undefined;
+  public isBilling: boolean = true;
+  public isContact: boolean = true;
+}
+export class UCRM_Client {
+  public isLead: boolean = false;
+  public clientType: UCRM_Client_Type = UCRM_Client_Type.Residential;
+  public companyName: string | undefined = undefined;
+  public companyRegistrationNumber: string | undefined = undefined;
+  public companyTaxId: string | undefined = undefined;
+  public companyWebsite: string | undefined = undefined;
+  public companyContactFirstName: string | undefined = undefined;
+  public companyContactLastName: string | undefined = undefined;
+  public firstName: string | undefined = undefined;
+  public lastName: string | undefined = undefined;
+  public street1: string | undefined = undefined;
+  public street2: string | undefined = undefined;
+  public city: string | undefined = undefined;
+  public zipCode: string | undefined = undefined;
+  public note: string | undefined = undefined;
+  public contacts: Array<UCRM_Client_Contact> = [];
+}
+
+export enum UCRM_Service_InvoicingPeriodType {
+  Backwards = 1,
+  Forwards = 2,
+}
+export enum UCRM_Service_ContractLengthType {
+  OpenEndContact = 1,
+  CloseEndContract = 2,
+}
+export enum UCRM_Service_DiscountType {
+  NoDiscount = 0,
+  PercentageDiscount = 1,
+  FixedDiscount = 2,
+}
+export enum UCRM_Client_Type {
+  Residential = 1,
+  Company = 2
+}
