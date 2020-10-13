@@ -2,7 +2,7 @@ import { Tools } from '@bettercorp/tools/lib/Tools';
 import { IServerConfig, webRequest as CWR } from '../../weblib';
 
 export class UNMS implements IUNMS {
-  private ServerConfig;
+  private ServerConfig: IServerConfig;
   constructor(server: IServerConfig) {
     this.ServerConfig = server;
   }

@@ -3,7 +3,7 @@ import { IServerConfig, webRequest as CWR } from '../../weblib';
 import moment = require('moment');
 
 export class UCRM implements IUCRM {
-  private ServerConfig;
+  private ServerConfig: IServerConfig;
   constructor(server: IServerConfig) {
     this.ServerConfig = server;
   }
