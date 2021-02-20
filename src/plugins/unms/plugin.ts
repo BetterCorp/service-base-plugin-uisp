@@ -2,63 +2,63 @@ import { IPlugin, PluginFeature } from '@bettercorp/service-base/lib/ILib';
 import { Tools } from '@bettercorp/tools/lib/Tools';
 import { UNMS } from './unms';
 import { IUNMSEvents } from '../../events';
-import { IUNMSUCRMEmitter } from '../../weblib';
+import { IUNMSUCRMData } from '../../weblib';
 
 export class Plugin implements IPlugin {
   init (features: PluginFeature): Promise<void> {
     return new Promise((resolve) => {
-      features.onEvent(null, IUNMSEvents.GetSites, (arg: IUNMSUCRMEmitter) => {
-        if (Tools.isNullOrUndefined(arg.data) || Tools.isNullOrUndefined(arg.data.server) || Tools.isNullOrUndefined(arg.data.server.hostname) || Tools.isNullOrUndefined(arg.data.server.key)) {
-          return features.emitEvent(null, arg.resultNames.error, 'Undefined variables passed in!');
+      features.onReturnableEvent(null, IUNMSEvents.GetSites, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
         }
-        new UNMS(arg.data.server).getSites().then(x => {
-          features.emitEvent(null, arg.resultNames.success, x);
+        new UNMS(data.server).getSites().then(x => {
+          resolve(x);
         }).catch(x => {
-          features.emitEvent(null, arg.resultNames.error, x);
+          reject(x);
         });
       });
 
-      features.onEvent(null, IUNMSEvents.GetDevices, (arg: IUNMSUCRMEmitter) => {
-        if (Tools.isNullOrUndefined(arg.data) || Tools.isNullOrUndefined(arg.data.server) || Tools.isNullOrUndefined(arg.data.server.hostname) || Tools.isNullOrUndefined(arg.data.server.key)) {
-          return features.emitEvent(null, arg.resultNames.error, 'Undefined variables passed in!');
+      features.onReturnableEvent(null, IUNMSEvents.GetDevices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
         }
-        new UNMS(arg.data.server).getDevices().then(x => {
-          features.emitEvent(null, arg.resultNames.success, x);
+        new UNMS(data.server).getDevices().then(x => {
+          resolve(x);
         }).catch(x => {
-          features.emitEvent(null, arg.resultNames.error, x);
+          reject(x);
         });
       });
 
-      features.onEvent(null, IUNMSEvents.GetDeviceStatistics, (arg: IUNMSUCRMEmitter) => {
-        if (Tools.isNullOrUndefined(arg.data) || Tools.isNullOrUndefined(arg.data.server) || Tools.isNullOrUndefined(arg.data.server.hostname) || Tools.isNullOrUndefined(arg.data.server.key)) {
-          return features.emitEvent(null, arg.resultNames.error, 'Undefined variables passed in!');
+      features.onReturnableEvent(null, IUNMSEvents.GetDeviceStatistics, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
         }
-        new UNMS(arg.data.server).getDeviceStatistics(arg.data.data).then(x => {
-          features.emitEvent(null, arg.resultNames.success, x);
+        new UNMS(data.server).getDeviceStatistics(data.data).then(x => {
+          resolve(x);
         }).catch(x => {
-          features.emitEvent(null, arg.resultNames.error, x);
+          reject(x);
         });
       });
 
-      features.onEvent(null, IUNMSEvents.GetTasks, (arg: IUNMSUCRMEmitter) => {
-        if (Tools.isNullOrUndefined(arg.data) || Tools.isNullOrUndefined(arg.data.server) || Tools.isNullOrUndefined(arg.data.server.hostname) || Tools.isNullOrUndefined(arg.data.server.key)) {
-          return features.emitEvent(null, arg.resultNames.error, 'Undefined variables passed in!');
+      features.onReturnableEvent(null, IUNMSEvents.GetTasks, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
         }
-        new UNMS(arg.data.server).getTasks().then(x => {
-          features.emitEvent(null, arg.resultNames.success, x);
+        new UNMS(data.server).getTasks().then(x => {
+          resolve(x);
         }).catch(x => {
-          features.emitEvent(null, arg.resultNames.error, x);
+          reject(x);
         });
       });
 
-      features.onEvent(null, IUNMSEvents.GetLogs, (arg: IUNMSUCRMEmitter) => {
-        if (Tools.isNullOrUndefined(arg.data) || Tools.isNullOrUndefined(arg.data.server) || Tools.isNullOrUndefined(arg.data.server.hostname) || Tools.isNullOrUndefined(arg.data.server.key)) {
-          return features.emitEvent(null, arg.resultNames.error, 'Undefined variables passed in!');
+      features.onReturnableEvent(null, IUNMSEvents.GetLogs, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
         }
-        new UNMS(arg.data.server).getLogs(arg.data.data.count, arg.data.data.page, arg.data.data.siteId, arg.data.data.deviceId, arg.data.data.level, arg.data.data.period, arg.data.data.query).then(x => {
-          features.emitEvent(null, arg.resultNames.success, x);
+        new UNMS(data.server).getLogs(data.data.count, data.data.page, data.data.siteId, data.data.deviceId, data.data.level, data.data.period, data.data.query).then(x => {
+          resolve(x);
         }).catch(x => {
-          features.emitEvent(null, arg.resultNames.error, x);
+          reject(x);
         });
       });
 

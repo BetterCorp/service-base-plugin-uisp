@@ -1,4 +1,3 @@
-import { IEmitter } from '@bettercorp/service-base/lib/ILib';
 import _AXIOS from 'axios';
 const AXIOS = _AXIOS as any;
 
@@ -10,9 +9,6 @@ export interface IServerConfig {
 export interface IUNMSUCRMData {
   data: any;
   server: IServerConfig;
-}
-export interface IUNMSUCRMEmitter extends IEmitter {
-  data: IUNMSUCRMData;
 }
 
 // tslint:disable-next-line: max-line-length

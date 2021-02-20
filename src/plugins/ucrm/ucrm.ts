@@ -141,9 +141,29 @@ export class UCRM implements IUCRM {
       }).catch(reject);
     });
   }
+  addNewInvoice (items: Array<UCRM_InvoiceItem>, attributes: Array<UCRM_InvoiceAttribute>, maturityDays: number = 14, 
+      invoiceTemplateId: number, clientId: number, applyCredit: Boolean = true, 
+      proforma: boolean = false, adminNotes?: string, notes?: string): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/clients/${clientId}/invoices`, 'POST', undefined, {
+        items,
+        attributes,
+        maturityDays,
+        invoiceTemplateId,
+        applyCredit,
+        proforma,
+        adminNotes,
+        notes
+      }).then(async (x: any) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
 }
 
 export interface IUCRM {
+  addNewInvoice (items: Array<UCRM_InvoiceItem>, attributes: Array<UCRM_InvoiceAttribute>, maturityDays: number, invoiceTemplateId: number, clientId: number, applyCredit?: Boolean, proforma?: boolean, adminNotes?: string, notes?: string): Promise<any>;
   addNewServiceForClient (service: UCRM_Service, clientId: number): Promise<any>;
   addNewClient (client: UCRM_Client): Promise<any>;
   getPayments (clientId?: Number): Promise<Array<any> | any>;
@@ -241,4 +261,18 @@ export enum UCRM_Service_DiscountType {
 export enum UCRM_Client_Type {
   Residential = 1,
   Company = 2
+}
+export interface UCRM_InvoiceItem {
+  label: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  tax1Id: number;
+  tax2Id?: number;
+  tax3Id?: number;
+  productId?: number; 
+}
+export interface UCRM_InvoiceAttribute {
+  value: string;
+  customAttributeId: number | null;
 }
