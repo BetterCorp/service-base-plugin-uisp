@@ -87,6 +87,17 @@ export class Plugin implements IPlugin {
           if (!Tools.isNullOrUndefined(data.data.typeId))
             if (data.data.typeId !== x.servicePlanId)
               return resolve(false);
+          if (Tools.isArray(data.data.typesId)) {
+            let okay = false;
+            for (const typeId of data.data.typesId) {
+              if (typeId === x.servicePlanId) {
+                okay = true;
+                break;
+              }
+            }
+            if (!okay)
+              return resolve(false);
+          }
           resolve(true);
         }).catch((x) => {
           reject(x);
