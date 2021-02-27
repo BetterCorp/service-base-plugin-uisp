@@ -4,7 +4,7 @@ export enum IUCRMEvents {
   AddPayments = "add-payment",
   GetInvoices = "get-invoices",
   GetServices = "get-services",
-  ValidateServiceAgainstClientId = "validate-serviceid-against-crmid",
+  ValidateServiceForClient = "validate-serviceid-for-client",
   GetServicesByType = "get-services-of-types",
   GetBankAccounts = "get-bank-accounts",
   AddBankAccount = "add-bank-account",

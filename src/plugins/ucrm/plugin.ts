@@ -71,12 +71,23 @@ export class Plugin implements IPlugin {
         });
       });
 
-      features.onReturnableEvent(null, IUCRMEvents.ValidateServiceAgainstClientId, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+      features.onReturnableEvent(null, IUCRMEvents.ValidateServiceForClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
         }
-        new UCRM(data.server).getServices(data.data.id, data.data.crmId).then(x => {
-          resolve(!Tools.isNullOrUndefined(x));
+        new UCRM(data.server).getServices(data.data.id, data.data.crmId).then((x: any) => {
+          if (Tools.isNullOrUndefined(x))
+            return resolve(false);
+          if (!Tools.isNullOrUndefined(data.data.active))
+            if (x.status !== 1)
+              return resolve(false);
+          if (!Tools.isNullOrUndefined(data.data.status))
+            if (data.data.status !== x.status)
+              return resolve(false);
+          if (!Tools.isNullOrUndefined(data.data.typeId))
+            if (data.data.typeId !== x.servicePlanId)
+              return resolve(false);
+          resolve(true);
         }).catch((x) => {
           reject(x);
         });
