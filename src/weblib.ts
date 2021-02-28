@@ -2,8 +2,8 @@ import _AXIOS from 'axios';
 const AXIOS = _AXIOS as any;
 
 export enum IUNMSUCRMPlugins {
-  unms = 'plugin-ucrm',
-  ucrm = 'plugin-unms'
+  unms = 'plugin-unms',
+  ucrm = 'plugin-ucrm'
 }
 
 export interface IServerConfig {
