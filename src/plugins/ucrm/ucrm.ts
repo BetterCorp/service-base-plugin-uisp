@@ -160,10 +160,19 @@ export class UCRM implements IUCRM {
       }).catch(reject);
     });
   }
+  sendInvoice (invoiceId: string): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/invoices/${invoiceId}/send`, 'PATCH').then(async (x: any) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
 }
 
 export interface IUCRM {
   addNewInvoice (items: Array<UCRM_InvoiceItem>, attributes: Array<UCRM_InvoiceAttribute>, maturityDays: number, invoiceTemplateId: number, clientId: number, applyCredit?: Boolean, proforma?: boolean, adminNotes?: string, notes?: string): Promise<any>;
+  sendInvoice (invoiceId: string): Promise<any>;
   addNewServiceForClient (service: UCRM_Service, clientId: number): Promise<any>;
   addNewClient (client: UCRM_Client): Promise<any>;
   getPayments (clientId?: Number): Promise<Array<any> | any>;

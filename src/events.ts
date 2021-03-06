@@ -3,6 +3,8 @@ export enum IUCRMEvents {
   AddPayment = "add-payment",
   AddPayments = "add-payment",
   GetInvoices = "get-invoices",
+  AddInvoice = "new-invoice",
+  SendInvoice = "send-invoice",
   GetServices = "get-services",
   ValidateServiceForClient = "validate-serviceid-for-client",
   GetServicesByType = "get-services-of-types",

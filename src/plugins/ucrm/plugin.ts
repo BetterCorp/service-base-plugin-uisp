@@ -38,6 +38,30 @@ export class Plugin implements IPlugin {
           });
       });
 
+      features.onReturnableEvent(null, IUCRMEvents.AddInvoice, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
+        }
+        new UCRM(data.server).addNewInvoice(data.data.items, data.data.attributes, 
+          data.data.maturityDays || 14, data.data.invoiceTemplateId, data.data.clientId, 
+          data.data.applyCredit || false, data.data.proforma || false, data.data.adminNotes, data.data.notes).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+      });
+
+      features.onReturnableEvent(null, IUCRMEvents.SendInvoice, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
+        }
+        new UCRM(data.server).sendInvoice(data.data).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+      });
+
       features.onReturnableEvent(null, IUCRMEvents.GetClients, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
