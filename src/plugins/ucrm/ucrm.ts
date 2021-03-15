@@ -7,6 +7,22 @@ export class UCRM implements IUCRM {
   constructor(server: IServerConfig) {
     this.ServerConfig = server;
   }
+  getServicePlanSurcharges (serviceId?: Number, id?: Number): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      self.webRequest(`/clients/services/${serviceId}/service-surcharges${Tools.isNullOrUndefined(id) ? '' : `/${id}`}`, 'GET').then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
+  getServicePlans (id?: Number): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/service-plans${Tools.isNullOrUndefined(id) ? '' : `/${id}`}`, 'GET').then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
 
   private webRequest (path: string, method: string, params: Object | undefined = undefined, data: Object | undefined = undefined, additionalProps: Object | undefined = undefined) {
     return CWR(this.ServerConfig, '/crm/api/v1.0', path, method, params, data, additionalProps);
@@ -41,16 +57,20 @@ export class UCRM implements IUCRM {
     });
   }
   getInvoicePdf (invoiceId: number, clientId: Number): Promise<any> {
-    throw new Error('Method not implemented.');
-    // return new Promise((resolve, reject) => {
-    //   getInvoices(invoiceId, clientId).then((invoiceObj: any) => {
-    //     if (invoiceObj.clientId !== clientId)
-    //       return reject('NO AUTH');
-    //     self.webRequest(`/invoices/${invoiceId}/pdf`, 'GET', undefined, undefined, {
-    //       responseType: 'blob'
-    //     }).then(resolve).catch(reject);
-    //   }).catch(reject);
-    // });
+    const self = this;
+    return new Promise((resolve, reject) => {
+      self.getInvoices(invoiceId, clientId).then((invoiceObj: any) => {
+        if (`${invoiceObj.clientId}` !== `${clientId}`)
+          return reject(`NO AUTH (${invoiceId} !=belong to ${clientId}) {${invoiceObj.clientId}}`);
+          self.webRequest(`/invoices/${invoiceId}/pdf`, 'GET', undefined, undefined, {
+          responseType: 'stream'
+        }).then((response: any) => {
+          var writer = Tools.MemoryStream();
+          response.data.pipe(writer);
+          resolve(writer);
+        }).catch(reject);
+      }).catch(reject);
+    });
   }
   getServices (serviceId?: Number, clientId?: Number): Promise<any[]> {
     let self = this;
@@ -186,6 +206,12 @@ export interface IUCRM {
   addPayment (clientId: Number, methodId: string, amount: number, note: string, invoiceIds?: Array<number>, applyToInvoicesAutomatically?: boolean, userId?: number, additionalProps?: any): Promise<Array<any> | any>;
   getClientBankAccount (id?: Number, clientId?: Number): Promise<Array<any> | any>;
   addClientBankAccount (clientId: Number, obj: any): Promise<Array<any> | any>;
+  getServicePlans (id?: Number): Promise<Array<any> | any>;
+  getServicePlanSurcharges (serviceId?: Number, id?: Number): Promise<Array<any> | any>;
+  //getTickets (id?: Number): Promise<Array<any> | any>;
+  //setTicket (ticketData: any, id?: Number): Promise<any>;
+  //getJobs (id?: Number): Promise<Array<any> | any>;
+  //setJob (jobData: any, id?: Number): Promise<any>;
 }
 
 export class UCRM_Service {
