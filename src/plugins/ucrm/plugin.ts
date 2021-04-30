@@ -2,24 +2,31 @@ import { IPlugin, PluginFeature } from '@bettercorp/service-base/lib/ILib';
 import { Tools } from '@bettercorp/tools/lib/Tools';
 import { UCRM } from './ucrm';
 import { IUCRMEvents } from '../../events';
-import { IUNMSUCRMData } from '../../weblib';
+import { IUCRMPluginConfig, IUNMSUCRMData } from '../../weblib';
 import { IWebServerInitPlugin } from '@bettercorp/service-base-plugin-web-server/lib/plugins/express/config';
 import { json as ExpressJSON, Response as ExpressResponse, Request as ExpressRequest } from 'express';
+import * as crypto from 'crypto';
+import * as cryptoJS from 'crypto-js';
 
 export class Plugin implements IPlugin {
-  init (features: PluginFeature): Promise<void> {
+  init(features: PluginFeature): Promise<void> {
     return new Promise(async (resolve) => {
-      if (features.getPluginConfig().webhooks === true) {
+      if (features.getPluginConfig<IUCRMPluginConfig>().webhooks === true) {
         await features.initForPlugins<IWebServerInitPlugin, void>('plugin-express', 'use', {
-          arg1: ExpressJSON({ limit: '1mb' })
+          arg1: ExpressJSON({ limit: '5mb' })
         });
-        await features.initForPlugins<IWebServerInitPlugin, void>('plugin-express', 'options', {
-          arg1: '/initrd/events/:id',
-          arg2: async (req: ExpressRequest, res: ExpressResponse): Promise<void> => {
+        features.initForPlugins('plugin-express', 'use', {
+          arg1: async (req: ExpressRequest, res: any, next: Function) => {
+            if (req.path.indexOf('/initrd/') !== 0) return next();
+            features.log.debug(`REQ[${ req.method }] ${ req.path } (${ JSON.stringify(req.query) })`);
             res.setHeader('Access-Control-Allow-Origin', 'https://never.bettercorp.co.za/');
             res.setHeader('Access-Control-Allow-Methods', ['OPTIONS', 'POST'].join(','));
             res.setHeader('Access-Control-Allow-Headers', ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'authorization', 'session'].join(','));
-            res.send(200);
+
+            if (req.method.toUpperCase() === 'OPTIONS')
+              return res.sendStatus(200);
+
+            next();
           }
         });
         await features.initForPlugins<IWebServerInitPlugin, void>('plugin-express', 'post', {
@@ -27,9 +34,9 @@ export class Plugin implements IPlugin {
           arg2: async (req: ExpressRequest, res: ExpressResponse): Promise<void> => {
             try {
               let postBody = req.body;
-              features.log.info(`[CRM] ${postBody.entity} changed for ${postBody.extraData.entity.clientId} (${postBody.eventName}-${postBody.entityId})`);
+              features.log.info(`[CRM] ${ postBody.entity } changed for ${ postBody.extraData.entity.clientId } (${ postBody.eventName }-${ postBody.entityId })`);
 
-              let cleanedID = `${req.params.id}`.replace(/(?![-])[\W]/g, '').trim().substr(0, 255);
+              let cleanedID = `${ req.params.id }`.replace(/(?![-])[\W]/g, '').trim().substr(0, 255);
               let knownServer = await features.emitEventAndReturn<String, Boolean>(null, IUCRMEvents.eventsGetServer + cleanedID, cleanedID);
               if (!knownServer) {
                 res.sendStatus(404);
@@ -41,6 +48,80 @@ export class Plugin implements IPlugin {
               res.sendStatus(404);
             }
           }
+        });
+      }
+
+      console.log('INIT UCRM');
+      if (features.getPluginConfig<IUCRMPluginConfig>().crmAPI === true) {
+        console.log('INIT UCRM3');
+        features.initForPlugins('plugin-express', 'use', {
+          arg1: async (req: any, res: any, next: Function) => {
+            if (req.path.indexOf('/api/') !== 0) return next();
+            features.log.debug(`REQ[${ req.method }] ${ req.path } (${ JSON.stringify(req.query) })`);
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', ['OPTIONS', 'POST', 'GET'].join(','));
+            res.setHeader('Access-Control-Allow-Headers', ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'authorization', 'session'].join(','));
+
+            if (req.method.toUpperCase() === 'OPTIONS')
+              return res.sendStatus(200);
+
+            next();
+          }
+        });
+        console.log('INIT UCRM4');
+        await features.initForPlugins<IWebServerInitPlugin, void>('plugin-express', 'get', {
+          arg1: '/api/IVPDF/:hash',
+          arg2: async (req: ExpressRequest, res: ExpressResponse): Promise<void> => {
+            try {
+              features.log.info(`[CRM] get INV PDF`);
+              let base64Hash = decodeURIComponent(`${ req.params.hash }`).substr(0, 1024);
+              let hash = Buffer.from(base64Hash, 'base64').toString('utf-8');
+              let now = new Date();
+              let checksum = decodeURIComponent(`${ req.query.checksum }`).substr(0, 1024);
+              let secureKey = features.getPluginConfig<IUCRMPluginConfig>().clientKey + `-${ checksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
+
+              let data = JSON.parse(Tools.decrypt(hash, secureKey));
+              let randoHashChecksum = cryptoJS.SHA256(data.buffer).toString();
+              if (randoHashChecksum !== checksum) throw 'Invalid checksum';
+
+              features.log.info(`[CRM] ${data.clientId} get ${data.invoiceId} INV PDF`);
+              new UCRM(data.server).getInvoicePdf(data.invoiceId, data.clientId).then((stream: any) => {
+                stream.pipe(res);
+              }).catch(x => {
+                features.log.error(x);
+                res.sendStatus(500);
+              });
+            } catch (exc) {
+              features.log.error(exc);
+              res.sendStatus(500);
+            }
+          }
+        });
+
+        console.log('INIT UCRM5');
+        features.onReturnableEvent(null, IUCRMEvents.getInvoicePdf, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          let random = crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex');
+          let randoHashChecksum = cryptoJS.SHA256(random).toString();
+          let now = new Date();
+          let secureKey = features.getPluginConfig<IUCRMPluginConfig>().clientKey + `-${ randoHashChecksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
+          let hash = Tools.encrypt(JSON.stringify({
+            server: data.server,
+            clientId: data.data.clientId,
+            invoiceId: data.data.invoiceId,
+            buffer: random,
+          }), secureKey);
+          let base64Hash = Buffer.from(hash, 'utf-8').toString('base64');
+          resolve({
+            url: features.getPluginConfig<IUCRMPluginConfig>().myHost + `/api/IVPDF/${ encodeURIComponent(base64Hash) }?checksum=${ encodeURIComponent(randoHashChecksum) }`
+          });
+          /*NodeTools.getFileHash(filePipe).then(x => {
+            resolve({
+              url: features.getPluginConfig<IUCRMPluginConfig>().myHost + `/api/${data.data.clientId}/${data.data.invoiceId}`
+            }).catch(reject);
+          })*/
         });
       }
 
@@ -83,17 +164,6 @@ export class Plugin implements IPlugin {
           return reject('Undefined variables passed in!');
         }
         new UCRM(data.server).getPaymentMethods().then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getInvoicePdf, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getInvoicePdf(data.data.invoiceId, data.data.clientId).then(x => {
           resolve(x);
         }).catch(x => {
           reject(x);

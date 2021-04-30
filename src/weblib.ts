@@ -6,6 +6,13 @@ export enum IUNMSUCRMPlugins {
   ucrm = 'plugin-ucrm'
 }
 
+export interface IUCRMPluginConfig {
+  webhooks: boolean;
+  crmAPI: boolean;
+  clientKey: string;
+  myHost: string;
+}
+
 export interface IServerConfig {
   hostname: string;
   key: string;
@@ -17,14 +24,14 @@ export interface IUNMSUCRMData {
 }
 
 // tslint:disable-next-line: max-line-length
-export function webRequest (server: IServerConfig, basePath: string, path: string, method: string, params: Object | undefined = undefined, data: Object | undefined = undefined, additionalProps: Object | undefined = undefined) {
+export function webRequest(server: IServerConfig, basePath: string, path: string, method: string, params: Object | undefined = undefined, data: Object | undefined = undefined, additionalProps: Object | undefined = undefined) {
   return new Promise(async (resolve, reject) => {
     let newParams: Object = {};
     if (params !== undefined && params !== null) {
       newParams = params;
     }
 
-    const url = `${server.hostname}${basePath}${path}`;
+    const url = `${ server.hostname }${ basePath }${ path }`;
     AXIOS({
       //timeout: 5000,
       url,
