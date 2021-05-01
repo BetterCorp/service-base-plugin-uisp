@@ -79,7 +79,7 @@ export class UCRM implements IUCRM {
         `/clients/services?clientId=${ clientId }&offset=${ offset }&limit=${ limit }${Tools.isNullOrUndefined(status) ? '' : `&statuses=${status}`}` :
         `/clients/services${ serviceId !== undefined && serviceId !== null ?
           `/${ serviceId }?offset=${ offset }&limit=${ limit }` :
-          '?offset=${offset}&limit=${limit}' }${Tools.isNullOrUndefined(status) ? '' : `&statuses=${status}`}`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+          `?offset=${offset}&limit=${limit}` }${Tools.isNullOrUndefined(status) ? '' : `&statuses=${status}`}`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
     });
   }
   getServiceSurcharges(serviceId: number): Promise<any[]> {

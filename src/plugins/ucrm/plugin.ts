@@ -183,7 +183,7 @@ export class Plugin implements IPlugin {
         }
         try {
           let server = new UCRM(data.server);
-          let services = await server.getServices(undefined, undefined, 1);
+          let services = await server.getServices(undefined, undefined, undefined); // TODO: Specific active services ... no need to waste time lookup up non-active services
           for (let service of services) {
             if (Tools.isNullOrUndefined(service.attributes)) continue;
             for (let attr of service.attributes) {
