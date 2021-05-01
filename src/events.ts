@@ -5,6 +5,7 @@ export enum IUCRMEvents {
   getPaymentMethods = "getPaymentMethods",
   getInvoicePdf = "getInvoicePdf",
   getServices = "getServices",
+  getServicesByAttribute = "getServicesByAttribute",
   getServiceSurcharges = "getServiceSurcharges",
   getInvoices = "getInvoices",
   getClient = "getClient",

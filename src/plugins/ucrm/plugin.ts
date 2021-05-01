@@ -51,9 +51,7 @@ export class Plugin implements IPlugin {
         });
       }
 
-      console.log('INIT UCRM');
       if (features.getPluginConfig<IUCRMPluginConfig>().crmAPI === true) {
-        console.log('INIT UCRM3');
         features.initForPlugins('plugin-express', 'use', {
           arg1: async (req: any, res: any, next: Function) => {
             if (req.path.indexOf('/api/') !== 0) return next();
@@ -68,7 +66,6 @@ export class Plugin implements IPlugin {
             next();
           }
         });
-        console.log('INIT UCRM4');
         await features.initForPlugins<IWebServerInitPlugin, void>('plugin-express', 'get', {
           arg1: '/api/IVPDF/:hash',
           arg2: async (req: ExpressRequest, res: ExpressResponse): Promise<void> => {
@@ -84,7 +81,7 @@ export class Plugin implements IPlugin {
               let randoHashChecksum = cryptoJS.SHA256(data.buffer).toString();
               if (randoHashChecksum !== checksum) throw 'Invalid checksum';
 
-              features.log.info(`[CRM] ${data.clientId} get ${data.invoiceId} INV PDF`);
+              features.log.info(`[CRM] ${ data.clientId } get ${ data.invoiceId } INV PDF`);
               new UCRM(data.server).getInvoicePdf(data.invoiceId, data.clientId).then((stream: any) => {
                 stream.pipe(res);
               }).catch(x => {
@@ -98,7 +95,6 @@ export class Plugin implements IPlugin {
           }
         });
 
-        console.log('INIT UCRM5');
         features.onReturnableEvent(null, IUCRMEvents.getInvoicePdf, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
           if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
             return reject('Undefined variables passed in!');
@@ -179,6 +175,26 @@ export class Plugin implements IPlugin {
         }).catch(x => {
           reject(x);
         });
+      });
+
+      features.onReturnableEvent(null, IUCRMEvents.getServicesByAttribute, async (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+          return reject('Undefined variables passed in!');
+        }
+        try {
+          let server = new UCRM(data.server);
+          let services = await server.getServices(undefined, undefined, 1);
+          for (let service of services) {
+            if (Tools.isNullOrUndefined(service.attributes)) continue;
+            for (let attr of service.attributes) {
+              if (attr.key === data.data.attrKey && attr.value === data.data.attrVal)
+                return resolve(service);
+            }
+          }
+          return resolve(null);
+        } catch (exc) {
+          reject(exc);
+        }
       });
 
       features.onReturnableEvent(null, IUCRMEvents.getServiceSurcharges, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {

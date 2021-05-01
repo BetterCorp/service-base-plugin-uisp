@@ -15,7 +15,7 @@
     "lib/**/*"
   ],
   "main": "lib/index.js",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "dependencies": {
     "@bettercorp/service-base": "^4.0.7",
     "@bettercorp/service-base-plugin-web-server": "^1.0.16",
