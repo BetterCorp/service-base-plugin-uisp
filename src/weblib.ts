@@ -9,6 +9,7 @@ export enum IUNMSUCRMPlugins {
 export interface IUCRMPluginConfig {
   webhooks: boolean;
   crmAPI: boolean;
+  events: boolean;
   clientKey: string;
   myHost: string;
 }

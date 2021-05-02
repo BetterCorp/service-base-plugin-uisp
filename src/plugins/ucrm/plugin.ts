@@ -45,13 +45,14 @@ export class Plugin implements IPlugin {
 
               features.emitEvent(null, IUCRMEvents.eventsServer + cleanedID, postBody);
             } catch (exc) {
-              res.sendStatus(404);
+              features.log.error(exc);
+              res.sendStatus(500);
             }
           }
         });
       }
 
-      if (features.getPluginConfig<IUCRMPluginConfig>().crmAPI === true) {
+      if (features.getPluginConfig<IUCRMPluginConfig>().events === true) {
         features.initForPlugins('plugin-express', 'use', {
           arg1: async (req: any, res: any, next: Function) => {
             if (req.path.indexOf('/api/') !== 0) return next();
@@ -95,283 +96,285 @@ export class Plugin implements IPlugin {
           }
         });
 
-        features.onReturnableEvent(null, IUCRMEvents.getInvoicePdf, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+        if (features.getPluginConfig<IUCRMPluginConfig>().crmAPI === true) {
+          features.onReturnableEvent(null, IUCRMEvents.getInvoicePdf, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+            if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+              return reject('Undefined variables passed in!');
+            }
+            let random = crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex');
+            let randoHashChecksum = cryptoJS.SHA256(random).toString();
+            let now = new Date();
+            let secureKey = features.getPluginConfig<IUCRMPluginConfig>().clientKey + `-${ randoHashChecksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
+            let hash = Tools.encrypt(JSON.stringify({
+              server: data.server,
+              clientId: data.data.clientId,
+              invoiceId: data.data.invoiceId,
+              buffer: random,
+            }), secureKey);
+            let base64Hash = Buffer.from(hash, 'utf-8').toString('base64');
+            resolve({
+              url: features.getPluginConfig<IUCRMPluginConfig>().myHost + `/api/IVPDF/${ encodeURIComponent(base64Hash) }?checksum=${ encodeURIComponent(randoHashChecksum) }`
+            });
+            /*NodeTools.getFileHash(filePipe).then(x => {
+              resolve({
+                url: features.getPluginConfig<IUCRMPluginConfig>().myHost + `/api/${data.data.clientId}/${data.data.invoiceId}`
+              }).catch(reject);
+            })*/
+          });
+        }
+
+        features.onReturnableEvent(null, IUCRMEvents.addNewServiceForClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
           if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
             return reject('Undefined variables passed in!');
           }
-          let random = crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex');
-          let randoHashChecksum = cryptoJS.SHA256(random).toString();
-          let now = new Date();
-          let secureKey = features.getPluginConfig<IUCRMPluginConfig>().clientKey + `-${ randoHashChecksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
-          let hash = Tools.encrypt(JSON.stringify({
-            server: data.server,
-            clientId: data.data.clientId,
-            invoiceId: data.data.invoiceId,
-            buffer: random,
-          }), secureKey);
-          let base64Hash = Buffer.from(hash, 'utf-8').toString('base64');
-          resolve({
-            url: features.getPluginConfig<IUCRMPluginConfig>().myHost + `/api/IVPDF/${ encodeURIComponent(base64Hash) }?checksum=${ encodeURIComponent(randoHashChecksum) }`
-          });
-          /*NodeTools.getFileHash(filePipe).then(x => {
-            resolve({
-              url: features.getPluginConfig<IUCRMPluginConfig>().myHost + `/api/${data.data.clientId}/${data.data.invoiceId}`
-            }).catch(reject);
-          })*/
+          new UCRM(data.server).addNewServiceForClient(data.data.service,
+            data.data.clientId).then(x => {
+              resolve(x);
+            }).catch(x => {
+              reject(x);
+            });
         });
-      }
 
-      features.onReturnableEvent(null, IUCRMEvents.addNewServiceForClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).addNewServiceForClient(data.data.service,
-          data.data.clientId).then(x => {
-            resolve(x);
-          }).catch(x => {
-            reject(x);
-          });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.addNewClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).addNewClient(data.data).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getPayments, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getPayments(data.data).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getPaymentMethods, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getPaymentMethods().then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getServices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getServices(data.data.serviceId, data.data.clientId).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getServicesByAttribute, async (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        try {
-          let server = new UCRM(data.server);
-          let services = await server.getServices(undefined, undefined, undefined); // TODO: Specific active services ... no need to waste time lookup up non-active services
-          for (let service of services) {
-            if (Tools.isNullOrUndefined(service.attributes)) continue;
-            for (let attr of service.attributes) {
-              if (attr.key === data.data.attrKey && attr.value === data.data.attrVal)
-                return resolve(service);
-            }
+        features.onReturnableEvent(null, IUCRMEvents.addNewClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
           }
-          return resolve(null);
-        } catch (exc) {
-          reject(exc);
-        }
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getServiceSurcharges, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getServiceSurcharges(data.data.serviceId).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getInvoices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getInvoices(data.data.invoiceId, data.data.clientId).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getClient(data.data.id, data.data.emailOrPhoneNumber).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.setClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).setClient(data.data.id, data.data.data).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.addPayment, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).addPayment(data.data.clientId, data.data.methodId
-          , data.data.amount, data.data.note, data.data.invoiceIds,
-          data.data.applyToInvoicesAutomatically, data.data.userId, data.data.additionalProps).then(x => {
+          new UCRM(data.server).addNewClient(data.data).then(x => {
             resolve(x);
           }).catch(x => {
             reject(x);
           });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getClientBankAccount, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getClientBankAccount(data.data.id, data.data.clientId).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
         });
-      });
 
-      features.onReturnableEvent(null, IUCRMEvents.addClientBankAccount, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).addClientBankAccount(data.data.clientId, data.data.data).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
+        features.onReturnableEvent(null, IUCRMEvents.getPayments, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getPayments(data.data).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
         });
-      });
 
-      features.onReturnableEvent(null, IUCRMEvents.addNewInvoice, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).addNewInvoice(data.data.items, data.data.attributes,
-          data.data.maturityDays, data.data.invoiceTemplateId, data.data.clientId,
-          data.data.applyCredit, data.data.proforma, data.data.adminNotes, data.data.notes
-        ).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
+        features.onReturnableEvent(null, IUCRMEvents.getPaymentMethods, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getPaymentMethods().then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
         });
-      });
 
-      features.onReturnableEvent(null, IUCRMEvents.sendInvoice, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).sendInvoice(data.data.id).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
+        features.onReturnableEvent(null, IUCRMEvents.getServices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getServices(data.data.serviceId, data.data.clientId).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
         });
-      });
 
-      features.onReturnableEvent(null, IUCRMEvents.getServicePlans, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getServicePlans(data.data.id).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-      features.onReturnableEvent(null, IUCRMEvents.getServicePlanSurcharges, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getServicePlanSurcharges(data.data.serviceId, data.data.id).then(x => {
-          resolve(x);
-        }).catch(x => {
-          reject(x);
-        });
-      });
-
-
-      features.onReturnableEvent(null, IUCRMEvents.validateServiceForClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getServices(data.data.id, data.data.crmId).then((x: any) => {
-          if (Tools.isNullOrUndefined(x))
-            return resolve(false);
-          if (!Tools.isNullOrUndefined(data.data.active))
-            if (x.status !== 1)
-              return resolve(false);
-          if (!Tools.isNullOrUndefined(data.data.status))
-            if (data.data.status !== x.status)
-              return resolve(false);
-          if (!Tools.isNullOrUndefined(data.data.typeId))
-            if (data.data.typeId !== x.servicePlanId)
-              return resolve(false);
-          if (Tools.isArray(data.data.typesId)) {
-            let okay = false;
-            for (const typeId of data.data.typesId) {
-              if (typeId === x.servicePlanId) {
-                okay = true;
-                break;
+        features.onReturnableEvent(null, IUCRMEvents.getServicesByAttribute, async (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          try {
+            let server = new UCRM(data.server);
+            let services = await server.getServices(undefined, undefined, undefined); // TODO: Specific active services ... no need to waste time lookup up non-active services
+            for (let service of services) {
+              if (Tools.isNullOrUndefined(service.attributes)) continue;
+              for (let attr of service.attributes) {
+                if (attr.key === data.data.attrKey && attr.value === data.data.attrVal)
+                  return resolve(service);
               }
             }
-            if (!okay)
-              return resolve(false);
+            return resolve(null);
+          } catch (exc) {
+            reject(exc);
           }
-          resolve(true);
-        }).catch((x) => {
-          reject(x);
         });
-      });
 
-      features.onReturnableEvent(null, IUCRMEvents.getServicesByType, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
-        if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
-          return reject('Undefined variables passed in!');
-        }
-        new UCRM(data.server).getServices().then(x => {
-          let outlist = [];
-          for (let ix of x) {
-            if (data.data.ids.indexOf(ix.servicePlanId) >= 0)
-              outlist.push(ix);
+        features.onReturnableEvent(null, IUCRMEvents.getServiceSurcharges, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
           }
-          resolve(outlist);
-        }).catch((x) => {
-          reject(x);
+          new UCRM(data.server).getServiceSurcharges(data.data.serviceId).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
         });
-      });
+
+        features.onReturnableEvent(null, IUCRMEvents.getInvoices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getInvoices(data.data.invoiceId, data.data.clientId).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.getClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getClient(data.data.id, data.data.emailOrPhoneNumber).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.setClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).setClient(data.data.id, data.data.data).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.addPayment, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).addPayment(data.data.clientId, data.data.methodId
+            , data.data.amount, data.data.note, data.data.invoiceIds,
+            data.data.applyToInvoicesAutomatically, data.data.userId, data.data.additionalProps).then(x => {
+              resolve(x);
+            }).catch(x => {
+              reject(x);
+            });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.getClientBankAccount, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getClientBankAccount(data.data.id, data.data.clientId).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.addClientBankAccount, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).addClientBankAccount(data.data.clientId, data.data.data).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.addNewInvoice, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).addNewInvoice(data.data.items, data.data.attributes,
+            data.data.maturityDays, data.data.invoiceTemplateId, data.data.clientId,
+            data.data.applyCredit, data.data.proforma, data.data.adminNotes, data.data.notes
+          ).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.sendInvoice, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).sendInvoice(data.data.id).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.getServicePlans, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getServicePlans(data.data.id).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.getServicePlanSurcharges, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getServicePlanSurcharges(data.data.serviceId, data.data.id).then(x => {
+            resolve(x);
+          }).catch(x => {
+            reject(x);
+          });
+        });
+
+
+        features.onReturnableEvent(null, IUCRMEvents.validateServiceForClient, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getServices(data.data.id, data.data.crmId).then((x: any) => {
+            if (Tools.isNullOrUndefined(x))
+              return resolve(false);
+            if (!Tools.isNullOrUndefined(data.data.active))
+              if (x.status !== 1)
+                return resolve(false);
+            if (!Tools.isNullOrUndefined(data.data.status))
+              if (data.data.status !== x.status)
+                return resolve(false);
+            if (!Tools.isNullOrUndefined(data.data.typeId))
+              if (data.data.typeId !== x.servicePlanId)
+                return resolve(false);
+            if (Tools.isArray(data.data.typesId)) {
+              let okay = false;
+              for (const typeId of data.data.typesId) {
+                if (typeId === x.servicePlanId) {
+                  okay = true;
+                  break;
+                }
+              }
+              if (!okay)
+                return resolve(false);
+            }
+            resolve(true);
+          }).catch((x) => {
+            reject(x);
+          });
+        });
+
+        features.onReturnableEvent(null, IUCRMEvents.getServicesByType, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+          if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
+            return reject('Undefined variables passed in!');
+          }
+          new UCRM(data.server).getServices().then(x => {
+            let outlist = [];
+            for (let ix of x) {
+              if (data.data.ids.indexOf(ix.servicePlanId) >= 0)
+                outlist.push(ix);
+            }
+            resolve(outlist);
+          }).catch((x) => {
+            reject(x);
+          });
+        });
+      }
 
       features.log.info("UCRM Ready");
       resolve();
