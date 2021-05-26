@@ -44,6 +44,7 @@ export class Plugin implements IPlugin {
               }
 
               features.emitEvent(null, IUCRMEvents.eventsServer + cleanedID, postBody);
+              res.sendStatus(202);
             } catch (exc) {
               features.log.error(exc);
               res.sendStatus(500);
