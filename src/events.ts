@@ -20,8 +20,9 @@ export enum IUCRMEvents {
   getServicePlans = "getServicePlans",
   getServicePlanSurcharges = "getServicePlanSurcharges",
 
-  eventsGetServer = 'get-server-events-',
-  eventsServer = 'server-events-'
+  eventsVerifyServer = 'verifyServerEvents-',
+  eventsGetServer = 'getServerEvents-',
+  eventsServer = 'serverEvents-'
 }
 
 export enum IUNMSEvents {

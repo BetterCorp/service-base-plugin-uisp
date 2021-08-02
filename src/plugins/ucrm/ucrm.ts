@@ -1,11 +1,55 @@
 import { Tools } from '@bettercorp/tools/lib/Tools';
 import { IServerConfig, webRequest as CWR } from '../../weblib';
 import moment = require('moment');
+import { IDictionary } from '@bettercorp/tools/lib/Interfaces';
+import { IPluginLogger } from '@bettercorp/service-base/lib/ILib';
+
+export enum IUCRMDirection {
+  Descending = 'DESC',
+  Ascending = 'ASC'
+}
+export enum IUCRMServiceStatus {
+  Prepared = 0,
+  Active = 1,
+  Ended = 2,
+  Suspended = 3,
+  PreparedBlocked = 4,
+  Obsolete = 5,
+  Deferred = 6,
+  Quoted = 7,
+}
+export enum IUCRMInvoiceStatus {
+  Draft = 0,
+  Unpaid = 1,
+  PartiallyPaid = 2,
+  Paid = 3,
+  Void = 4,
+  ProcessedProforma = 5
+}
+
+export interface UCRM_v2_GetInvoices {
+  id?: number;
+  organizationId?: number;
+  clientId?: number;
+  createdDateFrom?: string;
+  createdDateTo?: string;
+  statuses?: Array<IUCRMInvoiceStatus>;
+  number?: string;
+  overdue?: boolean;
+  proforma?: boolean;
+  query?: string;
+  limit?: number;
+  offset?: number;
+  order?: string;
+  direction?: IUCRMDirection;
+}
 
 export class UCRM implements IUCRM {
   private ServerConfig: IServerConfig;
-  constructor(server: IServerConfig) {
+  private log: IPluginLogger;
+  constructor(server: IServerConfig, log: IPluginLogger) {
     this.ServerConfig = server;
+    this.log = log;
   }
   getServicePlanSurcharges(serviceId?: Number, id?: Number): Promise<any> {
     let self = this;
@@ -76,10 +120,10 @@ export class UCRM implements IUCRM {
     let self = this;
     return new Promise((resolve, reject) => {
       self.webRequest((clientId !== undefined && clientId !== null && (serviceId === undefined || serviceId === null) ?
-        `/clients/services?clientId=${ clientId }&offset=${ offset }&limit=${ limit }${Tools.isNullOrUndefined(status) ? '' : `&statuses=${status}`}` :
+        `/clients/services?clientId=${ clientId }&offset=${ offset }&limit=${ limit }${ Tools.isNullOrUndefined(status) ? '' : `&statuses=${ status }` }` :
         `/clients/services${ serviceId !== undefined && serviceId !== null ?
           `/${ serviceId }?offset=${ offset }&limit=${ limit }` :
-          `?offset=${offset}&limit=${limit}` }${Tools.isNullOrUndefined(status) ? '' : `&statuses=${status}`}`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+          `?offset=${ offset }&limit=${ limit }` }${ Tools.isNullOrUndefined(status) ? '' : `&statuses=${ status }` }`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
     });
   }
   getServiceSurcharges(serviceId: number): Promise<any[]> {
@@ -92,6 +136,33 @@ export class UCRM implements IUCRM {
     let self = this;
     return new Promise((resolve, reject) => {
       self.webRequest((clientId !== undefined && clientId !== null && (invoiceId === undefined || invoiceId === null) ? `/invoices?clientId=${ clientId }&limit=10000` : `/invoices${ invoiceId !== undefined && invoiceId !== null ? `/${ invoiceId }?limit=10000` : '?limit=10000' }`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+    });
+  }
+  v2_getInvoices(query: UCRM_v2_GetInvoices): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      let req = `/invoices?`;
+      if (Tools.isNullOrUndefined(query.id)) {
+        let reqQRY = [];
+        let simpleProps = ['clientId', 'createdDateFrom', 'createdDateTo', 'number', 'query', 'limit', 'offset', 'order', 'direction'];
+        for (let prop of simpleProps) {
+          if (!Tools.isNullOrUndefined((query as IDictionary<any>)[prop]))
+            reqQRY.push(`${ prop }=${ encodeURIComponent((query as IDictionary<any>)[prop]) }`);
+        }
+        if (!Tools.isNullOrUndefined(query.overdue))
+          reqQRY.push(`overdue=${ query.overdue ? '1' : '0' }`);
+        if (!Tools.isNullOrUndefined(query.proforma))
+          reqQRY.push(`proforma=${ query.proforma ? '1' : '0' }`);
+        if (!Tools.isNullOrUndefined(query.statuses))
+          for (let status of query.statuses!)
+            reqQRY.push(`statuses[]=${ status }`);
+        req += reqQRY.join('&');
+      } else {
+        req = `/invoices/${ query.id }`;
+      }
+
+      self.log.debug(req);
+      self.webRequest(req, 'GET').then(x => resolve(x as Array<any>)).catch(reject);
     });
   }
   getClient(id?: Number, emailOrPhoneNumber?: String): Promise<any> {

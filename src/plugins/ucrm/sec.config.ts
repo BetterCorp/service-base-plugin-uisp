@@ -5,8 +5,7 @@ export default (): IUCRMPluginConfig => {
   return {
     webhooks: false,
     crmAPI: false,
-    events: false,
-    clientKey: crypto.pseudoRandomBytes(64).toString('hex'),
+    clientEncryptionKey: crypto.pseudoRandomBytes(128).toString('hex'), // encrypt data that touches the client side
     myHost: 'http://localhost'
   };
 };

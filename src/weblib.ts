@@ -9,8 +9,7 @@ export enum IUNMSUCRMPlugins {
 export interface IUCRMPluginConfig {
   webhooks: boolean;
   crmAPI: boolean;
-  events: boolean;
-  clientKey: string;
+  clientEncryptionKey: string;
   myHost: string;
 }
 
@@ -19,8 +18,8 @@ export interface IServerConfig {
   key: string;
 }
 
-export interface IUNMSUCRMData {
-  data: any;
+export interface IUNMSUCRMData<T = any> {
+  data: T;
   server: IServerConfig;
 }
 
