@@ -1,11 +1,6 @@
 import _AXIOS from 'axios';
 const AXIOS = _AXIOS as any;
 
-export enum IUNMSUCRMPlugins {
-  unms = 'plugin-unms',
-  ucrm = 'plugin-ucrm'
-}
-
 export interface IUCRMPluginConfig {
   webhooks: boolean;
   crmAPI: boolean;
