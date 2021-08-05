@@ -12,7 +12,7 @@
     "lib/**/*"
   ],
   "main": "lib/index.js",
-  "version": "2.1.20210701170807",
+  "version": "2.1.0",
   "dependencies": {
     "@bettercorp/service-base": "^5.2.20210705134744",
     "@bettercorp/service-base-plugin-web-server": "^1.0.20210705144515",
