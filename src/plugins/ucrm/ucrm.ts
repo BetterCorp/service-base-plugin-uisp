@@ -198,20 +198,22 @@ export class UCRM implements IUCRM {
   addPayment(clientId: Number, methodId: string, amount: number, note: string, invoiceIds?: number[], applyToInvoicesAutomatically?: boolean, userId?: number, additionalProps?: any): Promise<any> {
     let self = this;
     return new Promise((resolve, reject) => {
+      let nowFormat = moment().format();
       let sendObj: any = {
         clientId,
         amount,
         currencyCode: 'ZAR',
+        userId,
         note,
+        methodId,
         invoiceIds,
-        providerPaymentTime: moment().format('DD/MM/YYYY HH:mm')
+        createdDate: nowFormat,
+        providerPaymentTime: nowFormat,
+        ...(additionalProps || {})
       };
-      sendObj.methodId = methodId;
-      for (let key of Object.keys(additionalProps))
-        sendObj[key] = additionalProps[key];
       return self.webRequest(`/payments`, 'POST', undefined, sendObj).then(async (x) => {
         resolve(x);
-      }).catch(reject);
+      }).catch(x=>reject(x.response.data || x));
     });
   }
   getClientBankAccount(id?: Number, clientId?: Number): Promise<any> {
