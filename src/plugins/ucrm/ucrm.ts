@@ -203,18 +203,12 @@ export class UCRM implements IUCRM {
         amount,
         currencyCode: 'ZAR',
         note,
-        invoiceIds
+        invoiceIds,
+        providerPaymentTime: moment().format('DD/MM/YYYY HH:mm')
       };
       sendObj.methodId = methodId;
-      if (!Tools.isNullOrUndefined(additionalProps)) {
-        if (!Tools.isNullOrUndefined(additionalProps.providerName))
-          sendObj.providerName = additionalProps.providerName;
-        if (!Tools.isNullOrUndefined(additionalProps.providerPaymentId))
-          sendObj.providerPaymentId = additionalProps.providerPaymentId;
-        sendObj.providerPaymentTime = additionalProps.providerPaymentTime || moment().format('DD/MM/YYYY HH:mm');
-      } else {
-        sendObj.providerPaymentTime = moment().format('DD/MM/YYYY HH:mm');
-      }
+      for (let key of Object.keys(additionalProps))
+        sendObj[key] = additionalProps[key];
       return self.webRequest(`/payments`, 'POST', undefined, sendObj).then(async (x) => {
         resolve(x);
       }).catch(reject);
