@@ -217,33 +217,33 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
     return new Promise(async (resolve) => {
       self.express = new express(self);
 
-      if (self.getPluginConfig().webhooks === true) {
+      if ((await self.getPluginConfig()).webhooks === true) {
         await self.initWebhooks();
       }
 
-      if (self.getPluginConfig().crmAPI === true) {
+      if ((await self.getPluginConfig()).crmAPI === true) {
         await self.initCRMAPI();
       }
 
-      self.onReturnableEvent(null, IUCRMEvents.addNewServiceForClient, (a, b, c) => self.addNewServiceForClient(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.addNewClient, (a, b, c) => self.addNewClient(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getPayments, (a, b, c) => self.getPayments(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getPaymentMethods, (a, b, c) => self.getPaymentMethods(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getServices, (a, b, c) => self.getServices(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getServicesByAttribute, (a, b, c) => self.getServicesByAttribute(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getServiceSurcharges, (a, b, c) => self.getServiceSurcharges(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getInvoices, (a, b, c) => self.getInvoices(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getClient, (a, b, c) => self.getClient(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.setClient, (a, b, c) => self.setClient(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.addPayment, (a, b, c) => self.addPayment(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getClientBankAccount, (a, b, c) => self.getClientBankAccount(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.addClientBankAccount, (a, b, c) => self.addClientBankAccount(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.addNewInvoice, (a, b, c) => self.addNewInvoice(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.sendInvoice, (a, b, c) => self.sendInvoice(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getServicePlans, (a, b, c) => self.getServicePlans(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getServicePlanSurcharges, (a, b, c) => self.getServicePlanSurcharges(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.validateServiceForClient, (a, b, c) => self.validateServiceForClient(a, b, c));
-      self.onReturnableEvent(null, IUCRMEvents.getServicesByType, (a, b, c) => self.getServicesByType(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.addNewServiceForClient, (a, b, c) => self.addNewServiceForClient(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.addNewClient, (a, b, c) => self.addNewClient(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getPayments, (a, b, c) => self.getPayments(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getPaymentMethods, (a, b, c) => self.getPaymentMethods(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getServices, (a, b, c) => self.getServices(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getServicesByAttribute, (a, b, c) => self.getServicesByAttribute(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getServiceSurcharges, (a, b, c) => self.getServiceSurcharges(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getInvoices, (a, b, c) => self.getInvoices(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getClient, (a, b, c) => self.getClient(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.setClient, (a, b, c) => self.setClient(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.addPayment, (a, b, c) => self.addPayment(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getClientBankAccount, (a, b, c) => self.getClientBankAccount(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.addClientBankAccount, (a, b, c) => self.addClientBankAccount(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.addNewInvoice, (a, b, c) => self.addNewInvoice(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.sendInvoice, (a, b, c) => self.sendInvoice(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getServicePlans, (a, b, c) => self.getServicePlans(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getServicePlanSurcharges, (a, b, c) => self.getServicePlanSurcharges(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.validateServiceForClient, (a, b, c) => self.validateServiceForClient(a, b, c));
+      await self.onReturnableEvent(null, IUCRMEvents.getServicesByType, (a, b, c) => self.getServicesByType(a, b, c));
 
       self.log.info("UCRM Ready");
       resolve();
@@ -569,7 +569,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
       let hash = Buffer.from(base64Hash, 'base64').toString('utf-8');
       let now = new Date();
       let checksum = decodeURIComponent(`${ req.query.checksum }`).substr(0, 1024);
-      let secureKey = self.getPluginConfig().clientEncryptionKey + `-${ checksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
+      let secureKey = (await self.getPluginConfig()).clientEncryptionKey + `-${ checksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
 
       let data = JSON.parse(Tools.decrypt(hash, secureKey));
       let randoHashChecksum = cryptoJS.SHA256(data.buffer).toString();
@@ -588,14 +588,14 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
       res.sendStatus(500);
     }
   }
-  private onCrmAPIGetInvoicePDF(resolve: Function, reject: Function, data: IUNMSUCRMData) {
+  private async onCrmAPIGetInvoicePDF(resolve: Function, reject: Function, data: IUNMSUCRMData) {
     if (Tools.isNullOrUndefined(data)) {
       return reject('Undefined variables passed in!');
     }
     let random = crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex');
     let randoHashChecksum = cryptoJS.SHA256(random).toString();
     let now = new Date();
-    let secureKey = this.getPluginConfig().clientEncryptionKey + `-${ randoHashChecksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
+    let secureKey = (await this.getPluginConfig()).clientEncryptionKey + `-${ randoHashChecksum }-${ now.getFullYear() }-${ now.getMonth() }-${ now.getDay() }-invoice-pdf`;
     let hash = Tools.encrypt(JSON.stringify({
       clientKey: data.data.clientKey,
       clientId: data.data.clientId,
@@ -604,7 +604,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
     }), secureKey);
     let base64Hash = Buffer.from(hash, 'utf-8').toString('base64');
     resolve({
-      url: this.getPluginConfig().myHost + `/api/IVPDF/${ encodeURIComponent(base64Hash) }?checksum=${ encodeURIComponent(randoHashChecksum) }`
+      url: (await this.getPluginConfig()).myHost + `/api/IVPDF/${ encodeURIComponent(base64Hash) }?checksum=${ encodeURIComponent(randoHashChecksum) }`
     });
     /*NodeTools.getFileHash(filePipe).then(x => {
       resolve({

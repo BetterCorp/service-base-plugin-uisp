@@ -5,10 +5,10 @@ import { IUNMSEvents } from '../../events';
 import { IUNMSUCRMData } from '../../weblib';
 
 export class Plugin extends CPlugin<any> {
-  init (): Promise<void> {
+  init(): Promise<void> {
     const self = this;
-    return new Promise((resolve) => {
-      self.onReturnableEvent(null, IUNMSEvents.GetSites, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+    return new Promise(async (resolve) => {
+      await self.onReturnableEvent(null, IUNMSEvents.GetSites, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
         }
@@ -19,7 +19,7 @@ export class Plugin extends CPlugin<any> {
         });
       });
 
-      self.onReturnableEvent(null, IUNMSEvents.GetDevices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+      await self.onReturnableEvent(null, IUNMSEvents.GetDevices, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
         }
@@ -30,7 +30,7 @@ export class Plugin extends CPlugin<any> {
         });
       });
 
-      self.onReturnableEvent(null, IUNMSEvents.GetDeviceStatistics, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+      await self.onReturnableEvent(null, IUNMSEvents.GetDeviceStatistics, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
         }
@@ -41,7 +41,7 @@ export class Plugin extends CPlugin<any> {
         });
       });
 
-      self.onReturnableEvent(null, IUNMSEvents.GetTasks, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+      await self.onReturnableEvent(null, IUNMSEvents.GetTasks, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
         }
@@ -52,7 +52,7 @@ export class Plugin extends CPlugin<any> {
         });
       });
 
-      self.onReturnableEvent(null, IUNMSEvents.GetLogs, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
+      await self.onReturnableEvent(null, IUNMSEvents.GetLogs, (resolve: Function, reject: Function, data: IUNMSUCRMData) => {
         if (Tools.isNullOrUndefined(data) || Tools.isNullOrUndefined(data.server) || Tools.isNullOrUndefined(data.server.hostname) || Tools.isNullOrUndefined(data.server.key)) {
           return reject('Undefined variables passed in!');
         }
