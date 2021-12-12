@@ -17,7 +17,7 @@
   "main": "lib/index.js",
   "version": "2.1.0",
   "dependencies": {
-    "@bettercorp/service-base": "^6.0.20211212163555",
+    "@bettercorp/service-base": "^6.0.20211212183220",
     "@bettercorp/service-base-plugin-web-server": "^3.2.20211208030106",
     "@bettercorp/tools": "^1.2.20211118015545",
     "@types/node": "^16.11.12",
