@@ -17,7 +17,7 @@
   "main": "lib/index.js",
   "version": "2.1.0",
   "dependencies": {
-    "@bettercorp/service-base": "^6.0.20211208010331",
+    "@bettercorp/service-base": "^6.0.20211212163555",
     "@bettercorp/service-base-plugin-web-server": "^3.2.20211208030106",
     "@bettercorp/tools": "^1.2.20211118015545",
     "@types/node": "^16.11.12",
@@ -32,7 +32,7 @@
     "@typescript-eslint/parser": "^5.6.0",
     "eslint": "^8.4.1",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.2"
+    "typescript": "^4.5.3"
   },
   "bsb_project": true
 }
