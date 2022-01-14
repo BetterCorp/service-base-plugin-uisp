@@ -3,9 +3,14 @@ const AXIOS = _AXIOS as any;
 
 export interface IUCRMPluginConfig {
   webhooks: boolean;
-  crmAPI: boolean;
-  clientEncryptionKey: string;
+  //clientEncryptionKey: string;
   myHost: string;
+}
+
+export interface IUNMSPluginConfig {
+  //webhooks: boolean;
+  //clientEncryptionKey: string;
+  //myHost: string;
 }
 
 export interface IServerConfig {

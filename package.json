@@ -15,22 +15,21 @@
     "lib/**/*"
   ],
   "main": "lib/index.js",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "dependencies": {
-    "@bettercorp/service-base": "^6.1.20211220205712",
-    "@bettercorp/service-base-plugin-web-server": "^3.2.20211220204142",
+    "@bettercorp/service-base": "^7.3.20220114110959",
+    "@bettercorp/service-base-plugin-web-server": "^4.0.20220114125400",
     "@bettercorp/tools": "^1.2.20211118015545",
-    "@types/node": "^16.11.14",
-    "@types/uuid": "^8.3.3",
-    "axios": "^0.21.4",
-    "crypto-js": "^4.1.1",
+    "@types/node": "^17.0.8",
+    "@types/uuid": "^8.3.4",
+    "axios": "^0.24.0",
     "moment": "^2.29.1"
   },
   "devDependencies": {
-    "@types/crypto-js": "^4.0.2",
-    "@typescript-eslint/eslint-plugin": "^5.8.0",
-    "@typescript-eslint/parser": "^5.8.0",
-    "eslint": "^8.5.0",
+    "@types/crypto-js": "^4.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.9.1",
+    "@typescript-eslint/parser": "^5.9.1",
+    "eslint": "^8.6.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4"
   },

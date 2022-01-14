@@ -26,9 +26,9 @@ export enum IUCRMEvents {
 }
 
 export enum IUNMSEvents {
-  GetSites = "get-sites",
-  GetDevices = "get-devices",
-  GetDeviceStatistics = "get-device-statistics",
-  GetTasks = "get-tasks",
-  GetLogs = "get-logs",
+  getSites = "get-sites",
+  getDevices = "get-devices",
+  getDeviceStatistics = "get-device-statistics",
+  getTasks = "get-tasks",
+  getLogs = "get-logs",
 }

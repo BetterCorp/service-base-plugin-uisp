@@ -35,7 +35,7 @@ export class UNMS implements IUNMS {
       self.webRequest(`/tasks`, 'GET').then((x: any) => resolve(x)).catch(reject);
     });
   }
-  getLogs (count?: Number, page?: Number, siteId?: string, deviceId?: string, level?: LogLevel, period?: Number, query?: string): Promise<any[]> {
+  getLogs (count?: number, page?: number, siteId?: string, deviceId?: string, level?: LogLevel, period?: number, query?: string): Promise<any[]> {
     const self = this;
     return new Promise((resolve, reject) => {
       let params: Array<string> = [];
@@ -56,7 +56,7 @@ export class UNMS implements IUNMS {
       self.webRequest(`/logs?${params.join('&')}`, 'GET').then((x: any) => resolve(x)).catch(reject);
     });
   }
-  getOutages (count?: Number, page?: Number, siteId?: string, deviceId?: string, type?: OutageType, period?: Number, query?: string): Promise<any[]> {
+  getOutages (count?: number, page?: number, siteId?: string, deviceId?: string, type?: OutageType, period?: number, query?: string): Promise<any[]> {
     //const self = this;
     return new Promise((resolve, reject) => {
       reject();
@@ -77,6 +77,6 @@ export interface IUNMS {
   getDevices (): Promise<Array<any>>;
   getDeviceStatistics (deviceId: string): Promise<any>;
   getTasks (): Promise<Array<any>>;
-  getLogs (count?: Number, page?: Number, siteId?: string, deviceId?: string, level?: LogLevel, period?: Number, query?: string): Promise<Array<any>>;
-  getOutages (count?: Number, page?: Number, siteId?: string, deviceId?: string, type?: OutageType, period?: Number, query?: string): Promise<Array<any>>;
+  getLogs (count?: number, page?: number, siteId?: string, deviceId?: string, level?: LogLevel, period?: number, query?: string): Promise<Array<any>>;
+  getOutages (count?: number, page?: number, siteId?: string, deviceId?: string, type?: OutageType, period?: number, query?: string): Promise<Array<any>>;
 }
