@@ -5,6 +5,7 @@ import { IUCRMEvents } from '../../events';
 import { IServerConfig, IUCRMPluginConfig, IUNMSUCRMData } from '../../weblib';
 import { json as ExpressJSON, Response as ExpressResponse, Request as ExpressRequest } from 'express';
 import { express } from '@bettercorp/service-base-plugin-web-server/lib/plugins/express/express';
+import { Readable } from 'stream';
 
 export interface IUCRMServerEvent {
   clientKey: string;
@@ -23,18 +24,21 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
   async onEventsEmitServer(listener: (data: IUCRMServerEvent) => void) {
     this.onEvent(IUCRMEvents.eventsServer, listener);
   };
-  /*async getInvoicePDFUrl(clientKey: string, clientId: string, invoiceId: string): Promise<string> {
+  async getInvoicePDF(clientId: string, invoiceId: string, onStream: { (stream: Readable): Promise<void>; }): Promise<any> {
     const self = this;
-    return new Promise<string>((resolve, reject) => {
-      self.emitEventAndReturn<any, any>(IUCRMEvents.getInvoicePdf, {
-        data: {
-          clientKey,
-          clientId,
-          invoiceId
-        }
-      }).then(x => resolve(x.url)).catch(reject);
-    });
-  }*/
+    return new Promise<string>(async (resolve, reject) =>
+      self.receiveStream((err, stream) => new Promise((resolveI, rejectI) => {
+        if (err) return reject(err);
+        onStream(stream).then(resolveI).catch(rejectI);
+      }), 5).then(streamId =>
+        self.emitEventAndReturn<any, any>(IUCRMEvents.getInvoicePdf, {
+          data: {
+            clientId,
+            invoiceId,
+            streamId
+          }
+        }).then(resolve).catch(reject)).catch(reject));
+  }
   async getServicesByType(servicePlanIds: Array<string>, server: IServerConfig) {
     return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getServicesByType, {
       server,
