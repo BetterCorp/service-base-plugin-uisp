@@ -171,13 +171,14 @@ export class UCRM implements IUCRM {
       self.webRequest(req, 'GET').then(x => resolve(x as Array<any>)).catch(reject);
     });
   }
-  getClient(id?: number, emailOrPhoneNumber?: String): Promise<any> {
+  getClient(id?: number, emailOrPhoneNumber?: string, offset: number = 0, limit: number = 1000): Promise<any> {
     let self = this;
     return new Promise((resolve, reject) => {
-      if (emailOrPhoneNumber === undefined || emailOrPhoneNumber === null)
-        return self.webRequest(`/clients${ id ? `/${ id }` : '?limit=10000' }`, 'GET').then(x => resolve(x as Array<any> | any)).catch(reject);
+      if (Tools.isNullOrUndefined(emailOrPhoneNumber))
+        return self.webRequest(`/clients${ id ? `/${ id }` : `?limit=${ limit }&offset=${ offset }` }`, 'GET').then(x => resolve(x as Array<any> | any)).catch(reject);
+
       let tempEmailOrPhone = `${ emailOrPhoneNumber }`.toLowerCase();
-      return self.webRequest(`/clients?limit=10000`, 'GET').then(async (x) => {
+      return self.webRequest(`/clients?limit=${ limit }&offset=${ offset }`, 'GET').then(async (x) => {
         for (let clientObj of (x as any[])) {
           let clientContacts = await self.webRequest(`/clients/${ clientObj.id }/contacts`, 'GET');
           for (let contactObj of (clientContacts as any[])) {
@@ -219,7 +220,7 @@ export class UCRM implements IUCRM {
       };
       return self.webRequest(`/payments`, 'POST', undefined, sendObj).then(async (x) => {
         resolve(x);
-      }).catch(x=>reject(x.response.data || x));
+      }).catch(x => reject(x.response.data || x));
     });
   }
   getClientBankAccount(id?: number, clientId?: number): Promise<any> {
@@ -275,10 +276,10 @@ export interface IUCRM {
   getPayments(clientId?: number): Promise<Array<any> | any>;
   getPaymentMethods(): Promise<Array<any> | any>;
   getInvoicePdf(invoiceId: number, clientId: number): Promise<any>;
-  getServices(serviceId?: number, clientId?: number): Promise<Array<any>>;
+  getServices(serviceId?: number, clientId?: number, status?: number, offset?: number, limit?: number): Promise<Array<any>>;
   getServiceSurcharges(serviceId: number): Promise<Array<any>>;
   getInvoices(invoiceId?: number, clientId?: number): Promise<Array<any> | any>;
-  getClient(id?: number, emailOrPhoneNumber?: String): Promise<Array<any> | any>;
+  getClient(id?: number, emailOrPhoneNumber?: string, offset?: number, limit?: number): Promise<Array<any> | any>;
   setClient(id: number, clientObj: any): Promise<Array<any> | any>;
   addPayment(clientId: number, methodId: string, amount: number, note: string, invoiceIds?: Array<number>, applyToInvoicesAutomatically?: boolean, userId?: number, additionalProps?: any): Promise<Array<any> | any>;
   getClientBankAccount(id?: number, clientId?: number): Promise<Array<any> | any>;

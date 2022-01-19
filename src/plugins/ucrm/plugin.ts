@@ -1,6 +1,6 @@
 import { CPlugin, CPluginClient } from '@bettercorp/service-base/lib/interfaces/plugins';
 import { Tools } from '@bettercorp/tools/lib/Tools';
-import { IUCRMServiceStatus, UCRM, UCRM_v2_GetInvoicePdf, UCRM_v2_GetInvoices } from './ucrm';
+import { IUCRMServiceStatus, UCRM, UCRM_Client, UCRM_Service, UCRM_v2_GetInvoicePdf, UCRM_v2_GetInvoices } from './ucrm';
 import { IUCRMEvents } from '../../events';
 import { IServerConfig, IUCRMPluginConfig, IUNMSUCRMData } from '../../weblib';
 import { json as ExpressJSON, Response as ExpressResponse, Request as ExpressRequest } from 'express';
@@ -68,12 +68,23 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
       }
     });
   }
-  async getServices(server: IServerConfig, clientId?: number, serviceId?: number) {
+  async getServicesByService(server: IServerConfig, serviceId: number): Promise<UCRM_Service> {
     return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getServices, {
       server,
       data: {
-        clientId,
         serviceId
+      }
+    });
+  }
+  async getServices(server: IServerConfig, offset: number, limit: number): Promise<Array<UCRM_Service>>;
+  async getServices(server: IServerConfig, clientId: number): Promise<Array<UCRM_Service>>;
+  async getServices(server: IServerConfig, clientIdOrOffset?: number, limit?: number): Promise<Array<UCRM_Service>> {
+    return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getServices, {
+      server,
+      data: {
+        clientId: Tools.isNullOrUndefined(limit) ? clientIdOrOffset : undefined,
+        offset: Tools.isNullOrUndefined(limit) ? undefined : clientIdOrOffset,
+        limit
       }
     });
   }
@@ -146,7 +157,20 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
       }
     });
   }
-  async getClientById(id: number, server: IServerConfig) {
+  async getClients(server: IServerConfig): Promise<Array<UCRM_Client>>;
+  async getClients(server: IServerConfig, offset: number, limit: number): Promise<Array<UCRM_Client>>;
+  async getClients(server: IServerConfig, id: number): Promise<UCRM_Client>;
+  async getClients(server: IServerConfig, idOrOffset?: number, limit?: number): Promise<UCRM_Client | Array<UCRM_Client>> {
+    return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getClient, {
+      server,
+      data: {
+        id: Tools.isNullOrUndefined(limit) ? idOrOffset : undefined,
+        offset: Tools.isNullOrUndefined(limit) ? undefined : idOrOffset,
+        limit: limit
+      }
+    });
+  }
+  /*async getClientById(id: number, server: IServerConfig) {
     return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getClient, {
       server,
       data: {
@@ -161,7 +185,7 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
         emailOrPhoneNumber
       }
     });
-  }
+  }*/
   async addNewClient(clientData: any, server: IServerConfig) {
     return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.addNewClient, {
       server,
@@ -239,7 +263,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
   }
   private getServices(data: IUNMSUCRMData) {
     const self = this;
-    return new Promise((resolve, reject) => self.setupServer(data).then(server => server.getServices(data.data.serviceId, data.data.clientId).then(resolve).catch(reject)).catch(reject));
+    return new Promise((resolve, reject) => self.setupServer(data).then(server => server.getServices(data.data.serviceId, data.data.clientId, data.data.offset, data.data.limit).then(resolve).catch(reject)).catch(reject));
   }
   private getServicesByAttribute(data: IUNMSUCRMData) {
     const self = this;
@@ -270,7 +294,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
   }
   private getClient(data: IUNMSUCRMData) {
     const self = this;
-    return new Promise((resolve, reject) => self.setupServer(data).then(server => server.getClient(data.data.id, data.data.emailOrPhoneNumber).then(resolve).catch(reject)).catch(reject));
+    return new Promise((resolve, reject) => self.setupServer(data).then(server => server.getClient(data.data.id, undefined, data.data.offset, data.data.limit).then(resolve).catch(reject)).catch(reject));
   }
   private setClient(data: IUNMSUCRMData) {
     const self = this;
