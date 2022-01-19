@@ -270,7 +270,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
     return new Promise((resolve, reject) => self.setupServer(data).then(async server => {
       try {
         let server = new UCRM(data.server, this.log);
-        let services = await server.getServices(undefined, undefined, undefined); // TODO: Specific active services ... no need to waste time lookup up non-active services
+        let services = (await server.getServices(undefined, undefined, undefined)) as Array<UCRM_Service>; // TODO: Specific active services ... no need to waste time lookup up non-active services
         for (let service of services) {
           if (Tools.isNullOrUndefined(service.attributes)) continue;
           for (let attr of service.attributes) {
@@ -367,7 +367,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
     const self = this;
     return new Promise((resolve, reject) => self.setupServer(data).then(server => server.getServices().then(x => {
       let outlist = [];
-      for (let ix of x) {
+      for (let ix of (x as Array<UCRM_Service>)) {
         if (data.data.ids.indexOf(ix.servicePlanId) >= 0)
           outlist.push(ix);
       }

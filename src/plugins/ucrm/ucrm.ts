@@ -122,14 +122,14 @@ export class UCRM implements IUCRM {
       }).catch(reject);
     });
   }
-  getServices(serviceId?: number, clientId?: number, status?: number, offset: number = 0, limit: number = 10000): Promise<any[]> {
+  getServices(serviceId?: number, clientId?: number, status?: number, offset: number = 0, limit: number = 10000): Promise<UCRM_Service | Array<UCRM_Service>> {
     let self = this;
     return new Promise((resolve, reject) => {
       self.webRequest((clientId !== undefined && clientId !== null && (serviceId === undefined || serviceId === null) ?
         `/clients/services?clientId=${ clientId }&offset=${ offset }&limit=${ limit }${ Tools.isNullOrUndefined(status) ? '' : `&statuses=${ status }` }` :
         `/clients/services${ serviceId !== undefined && serviceId !== null ?
           `/${ serviceId }?offset=${ offset }&limit=${ limit }` :
-          `?offset=${ offset }&limit=${ limit }` }${ Tools.isNullOrUndefined(status) ? '' : `&statuses=${ status }` }`), 'GET').then(x => resolve(x as Array<any>)).catch(reject);
+          `?offset=${ offset }&limit=${ limit }` }${ Tools.isNullOrUndefined(status) ? '' : `&statuses=${ status }` }`), 'GET').then(x => resolve(x as UCRM_Service | Array<UCRM_Service>)).catch(reject);
     });
   }
   getServiceSurcharges(serviceId: number): Promise<any[]> {
@@ -276,7 +276,7 @@ export interface IUCRM {
   getPayments(clientId?: number): Promise<Array<any> | any>;
   getPaymentMethods(): Promise<Array<any> | any>;
   getInvoicePdf(invoiceId: number, clientId: number): Promise<any>;
-  getServices(serviceId?: number, clientId?: number, status?: number, offset?: number, limit?: number): Promise<Array<any>>;
+  getServices(serviceId?: number, clientId?: number, status?: number, offset?: number, limit?: number): Promise<UCRM_Service | Array<UCRM_Service>>;
   getServiceSurcharges(serviceId: number): Promise<Array<any>>;
   getInvoices(invoiceId?: number, clientId?: number): Promise<Array<any> | any>;
   getClient(id?: number, emailOrPhoneNumber?: string, offset?: number, limit?: number): Promise<Array<any> | any>;
@@ -292,70 +292,130 @@ export interface IUCRM {
   //setJob (jobData: any, id?: number): Promise<any>;
 }
 
-export class UCRM_Service {
-  public servicePlanId: number | undefined = undefined;
-  public servicePlanPeriodId: number | undefined = undefined;
-  public activeFrom: Date | undefined = undefined;
-  public activeTo: Date | undefined = undefined;
-  public name: string | undefined = undefined;
-  public price: number | undefined = undefined;
-  public note: string | undefined = undefined;
-  public invoicingStart: Date | undefined = undefined;
-  public invoicingPeriodType: UCRM_Service_InvoicingPeriodType = UCRM_Service_InvoicingPeriodType.Forwards;
-  public invoicingPeriodStartDay: number = 1;
-  public nextInvoicingDayAdjustment: number | undefined = undefined;
-  public invoicingProratedSeparately: boolean = true;
-  public invoicingSeparately: boolean = false;
-  public sendEmailsAutomatically: boolean = true;
-  public useCreditAutomatically: boolean = true;
-  public invoiceLabel: string | undefined = undefined;
-  public street1: string | undefined = undefined;
-  public street2: string | undefined = undefined;
-  public city: string | undefined = undefined;
-  public countryId: number | undefined = undefined;
-  public stateId: number | undefined = undefined;
-  public zipCode: string | undefined = undefined;
-  public addressGpsLat: number | undefined = undefined;
-  public addressGpsLon: number | undefined = undefined;
-  public contractId: string | undefined = undefined;
-  public contractLengthType: UCRM_Service_ContractLengthType = UCRM_Service_ContractLengthType.OpenEndContact;
-  public minimumContractLengthMonths: number = 12;
-  public contractEndDate: Date | undefined = undefined;
-  public discountType: UCRM_Service_DiscountType = UCRM_Service_DiscountType.NoDiscount;
-  public discountValue: number | undefined = undefined;
-  public discountInvoiceLabel: string | undefined = undefined;
-  public discountFrom: Date | undefined = undefined;
-  public discountTo: Date | undefined = undefined;
-  public tax1Id: number | undefined = undefined;
-  public tax2Id: number | undefined = undefined;
-  public tax3Id: number | undefined = undefined;
-  public fccBlockId: string | undefined = undefined;
-  public isQuoted: boolean = true;
+export enum UCRM_ServicePlanType {
+  Internet = 'Internet',
+  General = 'General'
 }
-export class UCRM_Client_Contact {
-  public email: string | undefined = undefined;
-  public phone: string | undefined = undefined;
-  public name: string | undefined = undefined;
-  public isBilling: boolean = true;
-  public isContact: boolean = true;
+export enum UCRM_DiscountType {
+  NoDiscount = 0,
+  Percentage = 1,
+  Fixed = 2
 }
-export class UCRM_Client {
-  public isLead: boolean = false;
-  public clientType: UCRM_Client_Type = UCRM_Client_Type.Residential;
-  public companyName: string | undefined = undefined;
-  public companyRegistrationNumber: string | undefined = undefined;
-  public companyTaxId: string | undefined = undefined;
-  public companyWebsite: string | undefined = undefined;
-  public companyContactFirstName: string | undefined = undefined;
-  public companyContactLastName: string | undefined = undefined;
-  public firstName: string | undefined = undefined;
-  public lastName: string | undefined = undefined;
-  public street1: string | undefined = undefined;
-  public street2: string | undefined = undefined;
-  public city: string | undefined = undefined;
-  public zipCode: string | undefined = undefined;
-  public note: string | undefined = undefined;
-  public contacts: Array<UCRM_Client_Contact> = [];
+export enum UCRM_ContractLengthType {
+  OpenEnd = 1,
+  CloseEnd = 2
+}
+export enum UCRM_InvoicingPeriodType {
+  Backwards = 1,
+  Forwards = 2
+}
+export enum UCRM_ServiceStatus {
+  Prepared = 0,
+  Active = 1,
+  Ended = 2,
+  Suspended = 3,
+  PreparedBlocked = 4,
+  Obsolete = 5,
+  Deferred = 6,
+  Quoted = 7,
+}
+export interface UCRM_Service {
+  servicePlanPeriodId: number;
+  activeFrom: string;
+  activeTo?: string;
+  name: string;
+  price: number;
+  note?: string;
+  invoicingStart: string;
+  invoicingPeriodType: UCRM_InvoicingPeriodType;
+  invoicingPeriodStartDay: number;
+  nextInvoicingDayAdjustment: number;
+  invoicingProratedSeparately: boolean;
+  invoicingSeparately: boolean;
+  sendEmailsAutomatically: boolean;
+  useCreditAutomatically: boolean;
+  invoiceLabel: string;
+  fullAddress: string;
+  street1: string;
+  street2: string;
+  city: string;
+  countryId: number;
+  stateId?: number;
+  zipCode: string;
+  addressGpsLat: number;
+  addressGpsLon: number;
+  contractId: string;
+  contractLengthType: UCRM_ContractLengthType;
+  minimumContractLengthMonths: number;
+  contractEndDate: string;
+  discountType: UCRM_DiscountType;
+  discountValue?: number;
+  discountInvoiceLabel?: string;
+  discountFrom?: string;
+  discountTo?: string;
+  tax1Id: number;
+  tax2Id?: number;
+  tax3Id?: number;
+  id: number;
+  servicePlanId: number;
+  clientId: number;
+  status: UCRM_ServiceStatus;
+  fccBlockId?: string;
+  hasIndividualPrice: boolean;
+  totalPrice: number;
+  servicePlanName: string;
+  servicePlanPrice: number;
+  servicePlanPeriod: number;
+  servicePlanType: UCRM_ServicePlanType;
+  downloadSpeed?: number;
+  uploadSpeed?: number;
+  currencyCode: string;
+  hasOutage?: boolean;
+  unmsClientSiteId?: string;
+  lastInvoicedDate?: string;
+  attributes: [{
+    value: string;
+    customAttributeId: number;
+    id: string;
+    serviceId: number;
+    name: string;
+    key: string;
+    clientZoneVisible?: boolean;
+  }];
+  suspensionReasonId?: number;
+  serviceChangeRequestId?: string;
+  setupFeePrice?: number;
+  earlyTerminationFeePrice?: number;
+  downloadSpeedOverride?: number;
+  uploadSpeedOverride?: number;
+  trafficShapingOverrideEnd?: string;
+  trafficShapingOverrideEnabled?: boolean;
+}
+export interface UCRM_Client_Contact {
+  email: string | undefined;
+  phone: string | undefined;
+  name: string | undefined;
+  isBilling: boolean;
+  isContact: boolean;
+}
+export interface UCRM_Client {
+  id: number;
+  isLead: boolean;
+  clientType: UCRM_Client_Type;
+  companyName: string | undefined;
+  companyRegistrationNumber: string | undefined;
+  companyTaxId: string | undefined;
+  companyWebsite: string | undefined;
+  companyContactFirstName: string | undefined;
+  companyContactLastName: string | undefined;
+  firstName: string | undefined;
+  lastName: string | undefined;
+  street1: string | undefined;
+  street2: string | undefined;
+  city: string | undefined;
+  zipCode: string | undefined;
+  note: string | undefined;
+  contacts: Array<UCRM_Client_Contact>;
 }
 
 export enum UCRM_Service_InvoicingPeriodType {
