@@ -16,13 +16,13 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
   public readonly _pluginName: string = "ucrm";
 
   async onEventsVerifyServer(listener: (clientKey?: string) => Promise<void>) {
-    this.onReturnableEvent<string, void>(IUCRMEvents.eventsVerifyServer, listener);
+    await this.onReturnableEvent<string, void>(IUCRMEvents.eventsVerifyServer, listener);
   };
   async onEventsGetServer(listener: (clientKey?: string) => Promise<void>) {
-    this.onReturnableEvent(IUCRMEvents.eventsGetServer, listener);
+    await this.onReturnableEvent(IUCRMEvents.eventsGetServer, listener);
   };
-  async onEventsEmitServer(listener: (data: IUCRMServerEvent) => void) {
-    this.onEvent(IUCRMEvents.eventsServer, listener);
+  async onEventsEmitServer(listener: { (data: IUCRMServerEvent): Promise<void>; }) {
+    await this.onEvent(IUCRMEvents.eventsServer, listener);
   };
   async getInvoicePDF(clientId: string, invoiceId: string, onStream: { (stream: Readable): Promise<void>; }): Promise<any> {
     const self = this;
@@ -30,7 +30,7 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
       self.receiveStream((err, stream) => new Promise((resolveI, rejectI) => {
         if (err) return reject(err);
         onStream(stream).then(resolveI).catch(rejectI);
-      }), 5).then(streamId =>
+      }), 60).then(streamId =>
         self.emitEventAndReturn<any, any>(IUCRMEvents.getInvoicePdf, {
           data: {
             clientId,
