@@ -425,7 +425,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
         clientKey,
         data: postBody
       });
-      res.sendStatus(202);
+      res.sendStatus(200);
     } catch (exc) {
       this.log.error(exc);
       res.sendStatus(500);
