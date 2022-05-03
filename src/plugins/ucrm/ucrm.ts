@@ -202,6 +202,14 @@ export class UCRM implements IUCRM {
       }).catch(reject);
     });
   }
+  setService(id: number, serviceObj: any): Promise<any> {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      return self.webRequest(`/clients/services/${ id }`, 'PATCH', undefined, serviceObj).then(async (x) => {
+        resolve(x);
+      }).catch(reject);
+    });
+  }
   addPayment(clientId: number, methodId: string, amount: number, note: string, invoiceIds?: number[], applyToInvoicesAutomatically?: boolean, userId?: number, additionalProps?: any): Promise<any> {
     let self = this;
     return new Promise((resolve, reject) => {
@@ -286,6 +294,8 @@ export interface IUCRM {
   addClientBankAccount(clientId: number, obj: any): Promise<Array<any> | any>;
   getServicePlans(id?: number): Promise<Array<any> | any>;
   getServicePlanSurcharges(serviceId?: number, id?: number): Promise<Array<any> | any>;
+  getServicePlanSurcharges(serviceId?: number, id?: number): Promise<Array<any> | any>;
+  setService(id: number, serviceObj: any): Promise<any>;
   //getTickets (id?: number): Promise<Array<any> | any>;
   //setTicket (ticketData: any, id?: number): Promise<any>;
   //getJobs (id?: number): Promise<Array<any> | any>;

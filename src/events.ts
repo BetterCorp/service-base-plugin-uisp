@@ -10,6 +10,7 @@ export enum IUCRMEvents {
   getInvoices = "getInvoices",
   getClient = "getClient",
   setClient = "setClient",
+  setService = "setService",
   addPayment = "addPayment",
   getClientBankAccount = "getClientBankAccount",
   addClientBankAccount = "addClientBankAccount",

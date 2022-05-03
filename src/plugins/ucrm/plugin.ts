@@ -148,6 +148,15 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
       }
     });
   }
+  async setService(id: number, data: any, server: IServerConfig) {
+    return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.setService, {
+      server,
+      data: {
+        id,
+        data
+      }
+    });
+  }
   async getServicesByAttribute(attrKey: string, attrVal: any, server: IServerConfig) {
     return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getServicesByAttribute, {
       server,
@@ -300,6 +309,10 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
     const self = this;
     return new Promise((resolve, reject) => self.setupServer(data).then(server => server.setClient(data.data.id, data.data.data).then(resolve).catch(reject)).catch(reject));
   }
+  private setService(data: IUNMSUCRMData) {
+    const self = this;
+    return new Promise((resolve, reject) => self.setupServer(data).then(server => server.setService(data.data.id, data.data.data).then(resolve).catch(reject)).catch(reject));
+  }
   private addPayment(data: IUNMSUCRMData) {
     const self = this;
     return new Promise((resolve, reject) => self.setupServer(data).then(server => server.addPayment(data.data.clientId, data.data.methodId
@@ -451,6 +464,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
       await self.onReturnableEvent(null, IUCRMEvents.getInvoices, (data) => self.getInvoices(data));
       await self.onReturnableEvent(null, IUCRMEvents.getClient, (data) => self.getClient(data));
       await self.onReturnableEvent(null, IUCRMEvents.setClient, (data) => self.setClient(data));
+      await self.onReturnableEvent(null, IUCRMEvents.setService, (data) => self.setService(data));
       await self.onReturnableEvent(null, IUCRMEvents.addPayment, (data) => self.addPayment(data));
       await self.onReturnableEvent(null, IUCRMEvents.getClientBankAccount, (data) => self.getClientBankAccount(data));
       await self.onReturnableEvent(null, IUCRMEvents.addClientBankAccount, (data) => self.addClientBankAccount(data));
