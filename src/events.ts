@@ -20,6 +20,7 @@ export enum IUCRMEvents {
   validateServiceForClient = "validateServiceForClient",
   getServicePlans = "getServicePlans",
   getServicePlanSurcharges = "getServicePlanSurcharges",
+  getCountries = "getCountries",
 
   eventsVerifyServer = 'verifyServerEvents-',
   eventsGetServer = 'getServerEvents-',

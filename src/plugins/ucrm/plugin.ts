@@ -1,6 +1,6 @@
 import { CPlugin, CPluginClient } from '@bettercorp/service-base/lib/interfaces/plugins';
 import { Tools } from '@bettercorp/tools/lib/Tools';
-import { IUCRMServiceStatus, UCRM, UCRM_Client, UCRM_Service, UCRM_v2_GetInvoicePdf, UCRM_v2_GetInvoices } from './ucrm';
+import { IUCRMServiceStatus, UCRM, UCRM_Client, UCRM_Country, UCRM_Service, UCRM_v2_GetInvoicePdf, UCRM_v2_GetInvoices } from './ucrm';
 import { IUCRMEvents } from '../../events';
 import { IServerConfig, IUCRMPluginConfig, IUNMSUCRMData } from '../../weblib';
 import { json as ExpressJSON, Response as ExpressResponse, Request as ExpressRequest } from 'express';
@@ -201,6 +201,12 @@ export class ucrm extends CPluginClient<IUCRMPluginConfig> {
       data: clientData
     });
   }
+  async getCountries(server: IServerConfig): Promise<Array<UCRM_Country>> {
+    return this.emitEventAndReturn<IUNMSUCRMData, Array<UCRM_Country>>(IUCRMEvents.getCountries, {
+      server,
+      data: null
+    });
+  }
   async getInvoices(query: UCRM_v2_GetInvoices, server: IServerConfig) {
     return this.emitEventAndReturn<IUNMSUCRMData, any>(IUCRMEvents.getInvoices, {
       server,
@@ -337,6 +343,10 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
   private sendInvoice(data: IUNMSUCRMData) {
     const self = this;
     return new Promise((resolve, reject) => self.setupServer(data).then(server => server.sendInvoice(data.data).then(resolve).catch(reject)).catch(reject));
+  }
+  private getCountries(data: IUNMSUCRMData) {
+    const self = this;
+    return new Promise((resolve, reject) => self.setupServer(data).then(server => server.getCountries().then(resolve).catch(reject)).catch(reject));
   }
   private getServicePlans(data: IUNMSUCRMData) {
     const self = this;
@@ -475,6 +485,7 @@ export class Plugin extends CPlugin<IUCRMPluginConfig> {
       await self.onReturnableEvent(null, IUCRMEvents.validateServiceForClient, (data) => self.validateServiceForClient(data));
       await self.onReturnableEvent(null, IUCRMEvents.getServicesByType, (data) => self.getServicesByType(data));
       await self.onReturnableEvent(null, IUCRMEvents.getInvoicePdf, (data) => self.getInvoicePdf(data));
+      await self.onReturnableEvent(null, IUCRMEvents.getCountries, (data) => self.getCountries(data));
 
       self.log.info("UCRM Ready");
       resolve();
