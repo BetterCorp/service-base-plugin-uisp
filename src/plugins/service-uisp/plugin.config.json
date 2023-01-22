@@ -1,0 +1,6 @@
+{
+  "key": "service-uisp",
+  "name": "UISP",
+  "icon": "uisp.png",
+  "description": "Ubiquiti UISP (UCRM/UNMS) Service"
+}
