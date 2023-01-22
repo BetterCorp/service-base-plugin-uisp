@@ -1,9 +1,16 @@
 import { ServiceCallable } from "@bettercorp/service-base";
 import { MyPluginConfig } from "../../plugins/service-uisp/sec.config";
 import { UISPReturnableEvents } from "../../plugins/service-uisp/plugin";
-import { IUCRMServiceStatus, UCRM_Client, UCRM_InvoiceAttribute, UCRM_InvoiceItem, UCRM_Service } from "../../plugins/service-uisp/ucrm";
+import {
+  IUCRMServiceStatus,
+  UCRM_Client,
+  UCRM_InvoiceAttribute,
+  UCRM_InvoiceItem,
+  UCRM_Service,
+} from "../../plugins/service-uisp/ucrm";
 import { RegisteredPlugin } from "@bettercorp/service-base/lib/service/serviceClient";
 import { UISPClient } from "./plugin";
+import { Readable } from "stream";
 
 export class UCRMClient {
   //private uSelf: UISPClient;
@@ -347,15 +354,18 @@ export class UCRMClient {
     hostname: string,
     key: string,
     id: number,
-    clientId: number
-  ): Promise<any> {
-    return await this._plugin.emitEventAndReturn(
+    clientId: number,
+    listener: { (error: Error | null, stream: Readable): Promise<void> }
+  ): Promise<void> {
+    const streamId = await this._plugin.receiveStream(listener, 30);
+    return await this._plugin.emitEventAndReturnTimed(
       "crm_getInvoicePdf",
+      35,
       hostname,
       key,
       id,
-      clientId
+      clientId,
+      streamId
     );
   }
-
 }

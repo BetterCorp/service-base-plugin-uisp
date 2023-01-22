@@ -7,6 +7,8 @@ export enum SupportedService {
 }
 export interface MyPluginConfig {
   supportedServices: Array<SupportedService>; // Supported services: Array of supported services
+  myHost: string; // My Host
+  webhooks: boolean; // Enable webhooks
 }
 
 export class Config extends SecConfig<MyPluginConfig> {
@@ -18,6 +20,12 @@ export class Config extends SecConfig<MyPluginConfig> {
       supportedServices: Tools.isArray(existingConfig.supportedServices)
         ? existingConfig.supportedServices
         : [],
+      myHost: !Tools.isNullOrUndefined(existingConfig.myHost)
+        ? existingConfig.myHost
+        : "http://localhost.never",
+        webhooks: !Tools.isNullOrUndefined(existingConfig.webhooks)
+        ? existingConfig.webhooks
+        : false,
     };
 
     return newConfig;

@@ -156,22 +156,18 @@ export class UCRM implements IUCRM {
         .catch(reject);
     });
   }
-  async getInvoicePdf(invoiceId: number, clientId: number): Promise<any> {
-    throw "NEED WORK";
-    /*const self = this;
+  async getInvoicePdf(invoiceId: number): Promise<any> {
+    const self = this;
     return new Promise((resolve, reject) => {
-      self.getInvoices(invoiceId, clientId).then((invoiceObj: any) => {
-        if (`${ invoiceObj.clientId }` !== `${ clientId }`)
-          return reject(`NO AUTH (${ invoiceId } !=belong to ${ clientId }) {${ invoiceObj.clientId }}`);
-        self.webRequest(`/invoices/${ invoiceId }/pdf`, 'GET', undefined, undefined, {
-          responseType: 'stream'
-        }).then((response: any) => {
-          var writer = Tools.MemoryStream();
-          response.data.pipe(writer);
-          resolve(writer);
-        }).catch(reject);
-      }).catch(reject);
-    });*/
+      self
+        .webRequest(`/invoices/${invoiceId}/pdf`, "GET", undefined, undefined, {
+          responseType: "stream",
+        })
+        .then((response: any) => {
+          resolve(response.data);
+        })
+        .catch(reject);
+    });
   }
   getServices(
     serviceId: number,
@@ -224,7 +220,7 @@ export class UCRM implements IUCRM {
         .catch(reject);
     });
   }
-  getInvoices(invoiceId?: number, clientId?: number): Promise<any> {
+  getInvoices(invoiceId?: number, clientId?: number): Promise<Array<any>> {
     let self = this;
     return new Promise((resolve, reject) => {
       self

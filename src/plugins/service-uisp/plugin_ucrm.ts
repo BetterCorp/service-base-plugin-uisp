@@ -7,8 +7,16 @@ import {
   UCRM_Service,
 } from "./ucrm";
 import { Service } from "./plugin";
-import { Tools } from "@bettercorp/tools";
+import { CleanStringStrength, Tools } from "@bettercorp/tools";
+import { fastify } from "@bettercorp/service-base-plugin-web-server";
+import { MyPluginConfig } from "./sec.config";
 
+export interface UCRMUISPOnEvents {
+  onEvent(clientKey: string, event: any): Promise<void>;
+}
+export interface UCRMUISPOnReturnableEvents {
+  verifyServer(clientKey: string): Promise<boolean>;
+}
 export interface UCRMUISPReturnableEvents {
   //crmGetInvoicePDF(clientId: string, invoiceId: string, onStream: { (stream: Readable): Promise<void>; }): Promise<any>;
   crm_addNewServiceForClient(
@@ -155,8 +163,9 @@ export interface UCRMUISPReturnableEvents {
     hostname: string,
     key: string,
     id: number,
-    clientId: number
-  ): Promise<any>;
+    clientId: number,
+    streamId: string
+  ): Promise<void>;
 }
 
 export class UISP_UCRM {
@@ -167,8 +176,56 @@ export class UISP_UCRM {
   private setupServer(hostname: string, key: string): UCRM {
     return new UCRM({ hostname, key }, this.uSelf.log);
   }
-  async init() {
+  async init(fastify: fastify, config: MyPluginConfig) {
     const self = this;
+    if (config.webhooks === true) {
+      await fastify.post(
+        "/initrd/events/:id/",
+        async (
+          reply,
+          params,
+          body: {
+            entityId: string;
+            eventName: string;
+            entity: string;
+            extraData: {
+              entity: {
+                clientId: string;
+              };
+            };
+          }
+        ) => {
+          await self.uSelf.log.info(
+            `[CRM] {entity} changed for {clientId} ({eventName}-{entityId})`,
+            {
+              entity: body.entity,
+              clientId: body.extraData.entity.clientId,
+              eventName: body.eventName,
+              entityId: body.entityId,
+            }
+          );
+
+          let clientKey = Tools.cleanString(
+            params.id,
+            255,
+            CleanStringStrength.soft
+          );
+          let knownServer = await self.uSelf.emitEventAndReturnTimed(
+            "verifyServer",
+            5,
+            clientKey
+          );
+          if (!knownServer) {
+            reply.status(404).send();
+            return;
+          }
+
+          await self.uSelf.emitEvent("onEvent", clientKey, body);
+          reply.status(200).send();
+        }
+      );
+    }
+
     await self.uSelf.onReturnableEvent(
       "crm_addNewServiceForClient",
       async (
@@ -443,10 +500,20 @@ export class UISP_UCRM {
     );
     await self.uSelf.onReturnableEvent(
       "crm_getInvoicePdf",
-      async (hostname: string, key: string, id: number, clientId: number) => {
-        return await self
-          .setupServer(hostname, key)
-          .getInvoicePdf(id, clientId);
+      async (
+        hostname: string,
+        key: string,
+        id: number,
+        clientId: number,
+        streamId: string
+      ) => {
+        const server = self.setupServer(hostname, key);
+        let invoice: Array<any> | any = await server.getInvoices(id, clientId);
+        if (Tools.isArray(invoice)) invoice = invoice[0];
+        if (`${invoice.clientId}` !== `${clientId}`)
+          throw `invoice (${id} != belong to ${clientId}) {${invoice.clientId}}`;
+        await self.uSelf.sendStream(streamId, await server.getInvoicePdf(id));
+        return;
       }
     );
   }
