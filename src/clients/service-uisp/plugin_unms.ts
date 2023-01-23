@@ -1,16 +1,8 @@
 import { ServiceCallable } from "@bettercorp/service-base";
 import { MyPluginConfig } from "../../plugins/service-uisp/sec.config";
 import { UISPReturnableEvents } from "../../plugins/service-uisp/plugin";
-import {
-  IUCRMServiceStatus,
-  UCRM_Client,
-  UCRM_InvoiceAttribute,
-  UCRM_InvoiceItem,
-  UCRM_Service,
-} from "../../plugins/service-uisp/ucrm";
 import { RegisteredPlugin } from "@bettercorp/service-base/lib/service/serviceClient";
 import { UISPClient } from "./plugin";
-import { Readable } from "stream";
 
 export class UNMSClient {
   //private uSelf: UISPClient;
