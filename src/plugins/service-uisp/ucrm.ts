@@ -638,32 +638,6 @@ export interface UCRM_Service {
   trafficShapingOverrideEnd?: string;
   trafficShapingOverrideEnabled?: boolean;
 }
-export interface UCRM_Client_Contact {
-  email: string | undefined;
-  phone: string | undefined;
-  name: string | undefined;
-  isBilling: boolean;
-  isContact: boolean;
-}
-export interface UCRM_Client {
-  id: number;
-  isLead: boolean;
-  clientType: UCRM_Client_Type;
-  companyName: string | undefined;
-  companyRegistrationNumber: string | undefined;
-  companyTaxId: string | undefined;
-  companyWebsite: string | undefined;
-  companyContactFirstName: string | undefined;
-  companyContactLastName: string | undefined;
-  firstName: string | undefined;
-  lastName: string | undefined;
-  street1: string | undefined;
-  street2: string | undefined;
-  city: string | undefined;
-  zipCode: string | undefined;
-  note: string | undefined;
-  contacts: Array<UCRM_Client_Contact>;
-}
 
 export enum UCRM_Service_InvoicingPeriodType {
   Backwards = 1,
@@ -700,4 +674,113 @@ export interface UCRM_Country {
   id: number;
   name: string;
   code: string;
+}
+
+export interface UCRM_Client {
+  id: number;
+  userIdent: null | string;
+  previousIsp: null | string;
+  isLead: boolean;
+  clientType: number;
+  companyName: null | string;
+  companyRegistrationNumber: null | string;
+  companyTaxId: null | string;
+  companyWebsite: null | string;
+  street1: null | string;
+  street2: null | string;
+  city: null | string;
+  countryId: number | null;
+  stateId: number | null;
+  zipCode: null | string;
+  fullAddress: null | string;
+  invoiceStreet1: null | string;
+  invoiceStreet2: null | string;
+  invoiceCity: null | string;
+  invoiceStateId: null | number;
+  invoiceCountryId: null | number;
+  invoiceZipCode: null | number;
+  invoiceAddressSameAsContact: boolean;
+  note: null | string;
+  sendInvoiceByPost: null | string;
+  invoiceMaturityDays: null | number;
+  stopServiceDue: null | string;
+  stopServiceDueDays: null | number;
+  organizationId: number;
+  tax1Id: null | number;
+  tax2Id: null | number;
+  tax3Id: null | number;
+  registrationDate: string;
+  leadConvertedAt: null | string;
+  companyContactFirstName: null | string;
+  companyContactLastName: null | string;
+  isActive: boolean;
+  firstName: null | string;
+  lastName: null | string;
+  username: null | string;
+  contacts: UCRM_Client_Contact[];
+  attributes: UCRM_Client_Attribute[];
+  accountBalance: number;
+  accountCredit: number;
+  accountOutstanding: number;
+  currencyCode: string;
+  organizationName: string;
+  bankAccounts: UCRM_Client_BankAccount[];
+  tags: UCRM_Client_Tag[];
+  invitationEmailSentDate: null | string;
+  avatarColor: string;
+  addressGpsLat: number | null;
+  addressGpsLon: number | null;
+  isArchived: boolean;
+  generateProformaInvoices: null | boolean;
+  usesProforma: boolean;
+  hasOverdueInvoice: boolean;
+  hasOutage: boolean;
+  hasSuspendedService: boolean;
+  hasServiceWithoutDevices: boolean;
+  referral: null | string;
+  hasPaymentSubscription: boolean;
+  hasAutopayCreditCard: boolean;
+}
+
+export interface UCRM_Client_Attribute {
+  id: number;
+  clientId: number;
+  customAttributeId: number;
+  name: string;
+  key: string;
+  value: string;
+  clientZoneVisible: boolean;
+}
+
+export interface UCRM_Client_BankAccount {
+  id: number;
+  accountNumber: string;
+}
+
+export interface UCRM_Client_Contact {
+  id: number;
+  clientId: number;
+  email: null | string;
+  phone: null | string;
+  name: null | string;
+  isBilling: boolean;
+  isContact: boolean;
+  types: UCRM_Client_Contact_Type[];
+}
+
+export interface UCRM_Client_Contact_Type {
+  id: number;
+  name: UCRM_Client_TypeName;
+}
+
+export enum UCRM_Client_TypeName {
+  Billing = "Billing",
+  General = "General",
+}
+
+export interface UCRM_Client_Tag {
+  id: number;
+  name: string;
+  colorBackground: string;
+  colorText: string;
 }

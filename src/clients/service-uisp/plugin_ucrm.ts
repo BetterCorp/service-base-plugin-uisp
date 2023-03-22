@@ -153,7 +153,7 @@ export class UCRMClient {
     id: number,
     offset?: number,
     limit?: number
-  ): Promise<any> {
+  ): Promise<UCRM_Client> {
     return await this._plugin.emitEventAndReturn(
       "crm_getClient",
       hostname,
