@@ -16,6 +16,7 @@ export interface IUNMSPluginConfig {
 export interface IServerConfig {
   hostname: string;
   key: string;
+  organizationId: number;
 }
 
 export interface IUNMSUCRMData<T = any> {
@@ -26,7 +27,9 @@ export interface IUNMSUCRMData<T = any> {
 // tslint:disable-next-line: max-line-length
 export function webRequest(server: IServerConfig, basePath: string, path: string, method: string, params: Object | undefined = undefined, data: Object | undefined = undefined, additionalProps: Object | undefined = undefined) {
   return new Promise(async (resolve, reject) => {
-    let newParams: Object = {};
+    let newParams: Object = {
+      organizationId: server.organizationId,
+    };
     if (params !== undefined && params !== null) {
       newParams = params;
     }

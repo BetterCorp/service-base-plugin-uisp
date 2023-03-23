@@ -10,6 +10,7 @@ import { Service } from "./plugin";
 import { CleanStringStrength, Tools } from "@bettercorp/tools";
 import { fastify } from "@bettercorp/service-base-plugin-web-server";
 import { MyPluginConfig } from "./sec.config";
+import { IServerConfig } from "../../weblib";
 
 export interface UCRMUISPOnEvents {
   onEvent(clientKey: string, event: any): Promise<void>;
@@ -20,25 +21,15 @@ export interface UCRMUISPOnReturnableEvents {
 export interface UCRMUISPReturnableEvents {
   //crmGetInvoicePDF(clientId: string, invoiceId: string, onStream: { (stream: Readable): Promise<void>; }): Promise<any>;
   crm_addNewServiceForClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId: number,
     service: UCRM_Service
   ): Promise<any>;
-  crm_addNewClient(
-    hostname: string,
-    key: string,
-    client: UCRM_Client
-  ): Promise<any>;
-  crm_getPayments(
-    hostname: string,
-    key: string,
-    clientId?: number
-  ): Promise<any>;
-  crm_getPaymentMethods(hostname: string, key: string): Promise<any>;
+  crm_addNewClient(config: IServerConfig, client: UCRM_Client): Promise<any>;
+  crm_getPayments(config: IServerConfig, clientId?: number): Promise<any>;
+  crm_getPaymentMethods(config: IServerConfig): Promise<any>;
   crm_getServices(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number,
     clientId?: number,
     status?: number,
@@ -46,8 +37,7 @@ export interface UCRMUISPReturnableEvents {
     limit?: number
   ): Promise<UCRM_Service>;
   crm_getServices(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId?: number,
     clientId?: number,
     status?: number,
@@ -55,45 +45,38 @@ export interface UCRMUISPReturnableEvents {
     limit?: number
   ): Promise<UCRM_Service[]>;
   crm_getServicesByAttribute(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     attrKey: string,
     attrVal: string
   ): Promise<any>;
   crm_getServiceSurcharges(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number
   ): Promise<any>;
   crm_getInvoices(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     invoiceId?: number | undefined,
     clientId?: number | undefined
   ): Promise<any>;
   crm_getClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id?: number,
     offset?: number,
     limit?: number
   ): Promise<any>;
   crm_setClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     data: UCRM_Client
   ): Promise<any>;
   crm_setService(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     data: UCRM_Service
   ): Promise<any>;
 
   crm_addPayment(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId: number,
     methodId: string,
     amount: number,
@@ -104,20 +87,17 @@ export interface UCRMUISPReturnableEvents {
     additionalProps: any
   ): Promise<any>;
   crm_getClientBankAccount(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     clientId: number
   ): Promise<any>;
   crm_addClientBankAccount(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId: number,
     data: any
   ): Promise<any>;
   crm_addNewInvoice(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     items: UCRM_InvoiceItem[],
     attributes: UCRM_InvoiceAttribute[],
     maturityDays: number,
@@ -128,31 +108,17 @@ export interface UCRMUISPReturnableEvents {
     adminNotes: string,
     notes: string
   ): Promise<any>;
-  crm_sendInvoice(
-    hostname: string,
-    key: string,
-    invoiceId: string
-  ): Promise<any>;
-  crm_getCountries(hostname: string, key: string): Promise<any>;
-  crm_getServicePlans(
-    hostname: string,
-    key: string,
-    serviceId: number
-  ): Promise<any>;
+  crm_sendInvoice(config: IServerConfig, invoiceId: string): Promise<any>;
+  crm_getCountries(config: IServerConfig): Promise<any>;
+  crm_getServicePlans(config: IServerConfig, serviceId: number): Promise<any>;
   crm_getServicePlanSurcharges(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number,
     id: number
   ): Promise<any>;
-  crm_getServicesByType(
-    hostname: string,
-    key: string,
-    ids: number[]
-  ): Promise<any>;
+  crm_getServicesByType(config: IServerConfig, ids: number[]): Promise<any>;
   crm_validateServiceForClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     crmId: number,
     active?: boolean,
@@ -160,8 +126,7 @@ export interface UCRMUISPReturnableEvents {
     servicePlanIds?: number | number[]
   ): Promise<any>;
   crm_getInvoicePdf(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     clientId: number,
     streamId: string
@@ -173,8 +138,27 @@ export class UISP_UCRM {
   constructor(uSelf: Service) {
     this.uSelf = uSelf;
   }
-  private setupServer(hostname: string, key: string): UCRM {
-    return new UCRM({ hostname, key }, this.uSelf.log);
+  private setupServer(
+    hostname: string,
+    key: string,
+    organizationId?: number
+  ): UCRM;
+  private setupServer(serverConfig: IServerConfig): UCRM;
+  private setupServer(
+    serverConfigOrHostname: IServerConfig | string,
+    key?: string,
+    organizationId?: number
+  ): UCRM {
+    return new UCRM(
+      Tools.isString(serverConfigOrHostname) && Tools.isString(key)
+        ? {
+            hostname: serverConfigOrHostname,
+            key,
+            organizationId: organizationId ?? 1,
+          }
+        : (serverConfigOrHostname as IServerConfig),
+      this.uSelf.log
+    );
   }
   async init(fastify: fastify, config: MyPluginConfig) {
     const self = this;
@@ -229,39 +213,37 @@ export class UISP_UCRM {
     await self.uSelf.onReturnableEvent(
       "crm_addNewServiceForClient",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         clientId: number,
         service: UCRM_Service
       ) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .addNewServiceForClient(service, clientId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_addNewClient",
-      async (hostname: string, key: string, client: UCRM_Client) => {
-        return await self.setupServer(hostname, key).addNewClient(client);
+      async (config: IServerConfig, client: UCRM_Client) => {
+        return await self.setupServer(config).addNewClient(client);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getPayments",
-      async (hostname: string, key: string, clientId?: number) => {
-        return await self.setupServer(hostname, key).getPayments(clientId);
+      async (config: IServerConfig, clientId?: number) => {
+        return await self.setupServer(config).getPayments(clientId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getPaymentMethods",
-      async (hostname: string, key: string) => {
-        return await self.setupServer(hostname, key).getPaymentMethods();
+      async (config: IServerConfig) => {
+        return await self.setupServer(config).getPaymentMethods();
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getServices",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         serviceId?: number,
         clientId?: number,
         status?: number,
@@ -269,20 +251,15 @@ export class UISP_UCRM {
         limit?: number
       ) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .getServices(serviceId, clientId, status, offset, limit);
       }
     );
 
     await self.uSelf.onReturnableEvent(
       "crm_getServicesByAttribute",
-      async (
-        hostname: string,
-        key: string,
-        attrKey: string,
-        attrVal: string
-      ) => {
-        const server = self.setupServer(hostname, key);
+      async (config: IServerConfig, attrKey: string, attrVal: string) => {
+        const server = self.setupServer(config);
         let services = await server.getServices(
           undefined,
           undefined,
@@ -299,56 +276,49 @@ export class UISP_UCRM {
     );
     await self.uSelf.onReturnableEvent(
       "crm_getServiceSurcharges",
-      async (hostname: string, key: string, serviceId: number) => {
-        return await self
-          .setupServer(hostname, key)
-          .getServiceSurcharges(serviceId);
+      async (config: IServerConfig, serviceId: number) => {
+        return await self.setupServer(config).getServiceSurcharges(serviceId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getInvoices",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         invoiceId?: number | undefined,
         clientId?: number | undefined
       ) => {
-        return await self
-          .setupServer(hostname, key)
-          .getInvoices(invoiceId, clientId);
+        return await self.setupServer(config).getInvoices(invoiceId, clientId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getClient",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         id?: number,
         offset?: number,
         limit?: number
       ) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .getClient(id, undefined, offset, limit);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_setClient",
-      async (hostname: string, key: string, id: number, data: UCRM_Client) => {
-        return await self.setupServer(hostname, key).setClient(id, data);
+      async (config: IServerConfig, id: number, data: UCRM_Client) => {
+        return await self.setupServer(config).setClient(id, data);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_setService",
-      async (hostname: string, key: string, id: number, data: UCRM_Service) => {
-        return await self.setupServer(hostname, key).setService(id, data);
+      async (config: IServerConfig, id: number, data: UCRM_Service) => {
+        return await self.setupServer(config).setService(id, data);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_addPayment",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         clientId: number,
         methodId: string,
         amount: number,
@@ -359,7 +329,7 @@ export class UISP_UCRM {
         additionalProps: any
       ) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .addPayment(
             clientId,
             methodId,
@@ -374,25 +344,24 @@ export class UISP_UCRM {
     );
     await self.uSelf.onReturnableEvent(
       "crm_getClientBankAccount",
-      async (hostname: string, key: string, id: number, clientId: number) => {
+      async (config: IServerConfig, id: number, clientId: number) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .getClientBankAccount(id, clientId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_addClientBankAccount",
-      async (hostname: string, key: string, clientId: number, data: any) => {
+      async (config: IServerConfig, clientId: number, data: any) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .addClientBankAccount(clientId, data);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_addNewInvoice",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         items: UCRM_InvoiceItem[],
         attributes: UCRM_InvoiceAttribute[],
         maturityDays: number,
@@ -404,7 +373,7 @@ export class UISP_UCRM {
         notes: string
       ) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .addNewInvoice(
             items,
             attributes,
@@ -420,35 +389,35 @@ export class UISP_UCRM {
     );
     await self.uSelf.onReturnableEvent(
       "crm_sendInvoice",
-      async (hostname: string, key: string, invoiceId: string) => {
-        return await self.setupServer(hostname, key).sendInvoice(invoiceId);
+      async (config: IServerConfig, invoiceId: string) => {
+        return await self.setupServer(config).sendInvoice(invoiceId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getCountries",
-      async (hostname: string, key: string) => {
-        return await self.setupServer(hostname, key).getCountries();
+      async (config: IServerConfig) => {
+        return await self.setupServer(config).getCountries();
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getServicePlans",
-      async (hostname: string, key: string, serviceId: number) => {
-        return await self.setupServer(hostname, key).getServicePlans(serviceId);
+      async (config: IServerConfig, serviceId: number) => {
+        return await self.setupServer(config).getServicePlans(serviceId);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getServicePlanSurcharges",
-      async (hostname: string, key: string, serviceId: number, id: number) => {
+      async (config: IServerConfig, serviceId: number, id: number) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .getServicePlanSurcharges(serviceId, id);
       }
     );
     await self.uSelf.onReturnableEvent(
       "crm_getServicesByType",
-      async (hostname: string, key: string, ids: number[]) => {
+      async (config: IServerConfig, ids: number[]) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .getServices()
           .then((x) => {
             let outlist = [];
@@ -462,8 +431,7 @@ export class UISP_UCRM {
     await self.uSelf.onReturnableEvent(
       "crm_validateServiceForClient",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         id: number,
         crmId: number,
         active?: boolean,
@@ -471,7 +439,7 @@ export class UISP_UCRM {
         servicePlanIds?: number | number[]
       ) => {
         return await self
-          .setupServer(hostname, key)
+          .setupServer(config)
           .getServices(id, crmId)
           .then((x: any) => {
             if (Tools.isNullOrUndefined(x)) return false;
@@ -501,13 +469,12 @@ export class UISP_UCRM {
     await self.uSelf.onReturnableEvent(
       "crm_getInvoicePdf",
       async (
-        hostname: string,
-        key: string,
+        config: IServerConfig,
         id: number,
         clientId: number,
         streamId: string
       ) => {
-        const server = self.setupServer(hostname, key);
+        const server = self.setupServer(config);
         let invoice: Array<any> | any = await server.getInvoices(id, clientId);
         if (Tools.isArray(invoice)) invoice = invoice[0];
         if (`${invoice.clientId}` !== `${clientId}`)

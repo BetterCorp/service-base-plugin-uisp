@@ -12,6 +12,7 @@ import { RegisteredPlugin } from "@bettercorp/service-base/lib/service/serviceCl
 import { UISPClient } from "./plugin";
 import { Readable } from "stream";
 import { Tools } from "@bettercorp/tools";
+import { IServerConfig } from "../../weblib";
 
 export class UCRMClient {
   //private uSelf: UISPClient;
@@ -39,53 +40,45 @@ export class UCRMClient {
   }
 
   public async addNewServiceForClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId: number,
     service: UCRM_Service
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_addNewServiceForClient",
-      hostname,
-      key,
+      config,
       clientId,
       service
     );
   }
   public async addNewClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     client: UCRM_Client
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_addNewClient",
-      hostname,
-      key,
+      config,
       client
     );
   }
   public async getPayments(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId?: number
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getPayments",
-      hostname,
-      key,
+      config,
       clientId
     );
   }
-  public async getPaymentMethods(hostname: string, key: string): Promise<any> {
+  public async getPaymentMethods(config: IServerConfig): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getPaymentMethods",
-      hostname,
-      key
+      config
     );
   }
   public async getService(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number,
     clientId?: number,
     status?: number,
@@ -94,8 +87,7 @@ export class UCRMClient {
   ): Promise<UCRM_Service> {
     return await this._plugin.emitEventAndReturn(
       "crm_getServices",
-      hostname,
-      key,
+      config,
       serviceId,
       clientId,
       status,
@@ -104,8 +96,7 @@ export class UCRMClient {
     );
   }
   public async getServices(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId?: number,
     status?: number,
     offset?: number,
@@ -113,8 +104,7 @@ export class UCRMClient {
   ): Promise<Array<UCRM_Service>> {
     return await this._plugin.emitEventAndReturn(
       "crm_getServices",
-      hostname,
-      key,
+      config,
       undefined,
       clientId,
       status,
@@ -123,105 +113,84 @@ export class UCRMClient {
     );
   }
   public async getServiceSurcharges(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getServiceSurcharges",
-      hostname,
-      key,
+      config,
       serviceId
     );
   }
   public async getInvoices(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     invoiceId?: number | undefined,
     clientId?: number | undefined
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getInvoices",
-      hostname,
-      key,
+      config,
       invoiceId,
       clientId
     );
   }
+  public async getClient(config: IServerConfig): Promise<Array<UCRM_Client>>;
   public async getClient(
-    hostname: string,
-    key: string
-  ): Promise<Array<UCRM_Client>>;
-  public async getClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     offset: number,
     limit: number
   ): Promise<Array<UCRM_Client>>;
   public async getClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number
   ): Promise<UCRM_Client>;
   public async getClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     idOrOffset?: number,
     limit?: number
   ): Promise<UCRM_Client | Array<UCRM_Client>> {
     if (Tools.isNullOrUndefined(idOrOffset))
-      return await this._plugin.emitEventAndReturn(
-        "crm_getClient",
-        hostname,
-        key
-      );
+      return await this._plugin.emitEventAndReturn("crm_getClient", config);
     if (!Tools.isNullOrUndefined(limit))
       return await this._plugin.emitEventAndReturn(
         "crm_getClient",
-        hostname,
-        key,
+        config,
         undefined,
         idOrOffset,
         limit
       );
     return await this._plugin.emitEventAndReturn(
       "crm_getClient",
-      hostname,
-      key,
+      config,
       idOrOffset
     );
   }
   public async setClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     data: UCRM_Client
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_setClient",
-      hostname,
-      key,
+      config,
       id,
       data
     );
   }
   public async setService(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     data: UCRM_Service
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_setService",
-      hostname,
-      key,
+      config,
       id,
       data
     );
   }
   public async addPayment(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId: number,
     methodId: string,
     amount: number,
@@ -233,8 +202,7 @@ export class UCRMClient {
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_addPayment",
-      hostname,
-      key,
+      config,
       clientId,
       methodId,
       amount,
@@ -246,36 +214,31 @@ export class UCRMClient {
     );
   }
   public async getClientBankAccount(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     clientId: number
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getClientBankAccount",
-      hostname,
-      key,
+      config,
       id,
       clientId
     );
   }
   public async addClientBankAccount(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     clientId: number,
     data: any
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_addClientBankAccount",
-      hostname,
-      key,
+      config,
       clientId,
       data
     );
   }
   public async addNewInvoice(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     items: UCRM_InvoiceItem[],
     attributes: UCRM_InvoiceAttribute[],
     maturityDays: number,
@@ -288,8 +251,7 @@ export class UCRMClient {
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_addNewInvoice",
-      hostname,
-      key,
+      config,
       items,
       attributes,
       maturityDays,
@@ -302,65 +264,52 @@ export class UCRMClient {
     );
   }
   public async sendInvoice(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     invoiceId: string
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_sendInvoice",
-      hostname,
-      key,
+      config,
       invoiceId
     );
   }
-  public async getCountries(hostname: string, key: string): Promise<any> {
-    return await this._plugin.emitEventAndReturn(
-      "crm_getCountries",
-      hostname,
-      key
-    );
+  public async getCountries(config: IServerConfig): Promise<any> {
+    return await this._plugin.emitEventAndReturn("crm_getCountries", config);
   }
   public async getServicePlans(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getServicePlans",
-      hostname,
-      key,
+      config,
       serviceId
     );
   }
   public async getServicePlanSurcharges(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     serviceId: number,
     id: number
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getServicePlanSurcharges",
-      hostname,
-      key,
+      config,
       serviceId,
       id
     );
   }
   public async getServicesByType(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     ids: number[]
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getServicesByType",
-      hostname,
-      key,
+      config,
       ids
     );
   }
   public async validateServiceForClient(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     crmId: number,
     active?: boolean,
@@ -369,8 +318,7 @@ export class UCRMClient {
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_validateServiceForClient",
-      hostname,
-      key,
+      config,
       id,
       crmId,
       active,
@@ -379,8 +327,7 @@ export class UCRMClient {
     );
   }
   public async getInvoicePdf(
-    hostname: string,
-    key: string,
+    config: IServerConfig,
     id: number,
     clientId: number,
     listener: { (error: Error | null, stream: Readable): Promise<void> }
@@ -389,8 +336,7 @@ export class UCRMClient {
     return await this._plugin.emitEventAndReturnTimed(
       "crm_getInvoicePdf",
       35,
-      hostname,
-      key,
+      config,
       id,
       clientId,
       streamId
