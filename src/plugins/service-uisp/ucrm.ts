@@ -197,7 +197,9 @@ export class UCRM implements IUCRM {
           clientId !== undefined &&
             clientId !== null &&
             (serviceId === undefined || serviceId === null)
-            ? `/clients/services?clientId=${clientId}&offset=${offset}&limit=${limit}${
+            ? `/clients/services?clientId=${clientId}&offset=${
+                offset ?? 0
+              }&limit=${limit ?? 10000}${
                 Tools.isNullOrUndefined(status) ? "" : `&statuses=${status}`
               }`
             : `/clients/services${
@@ -293,7 +295,9 @@ export class UCRM implements IUCRM {
       if (Tools.isNullOrUndefined(emailOrPhoneNumber))
         return self
           .webRequest(
-            `/clients${id ? `/${id}` : `?limit=${limit}&offset=${offset}`}`,
+            `/clients${
+              id ? `/${id}` : `?limit=${limit ?? 1000}&offset=${offset ?? 0}`
+            }`,
             "GET"
           )
           .then((x) => resolve(x as Array<any> | any))
