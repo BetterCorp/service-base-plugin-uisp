@@ -2,6 +2,8 @@ import { Service } from "./plugin";
 import { fastify } from "@bettercorp/service-base-plugin-web-server";
 import { MyPluginConfig } from "./sec.config";
 import { UNMS } from "./unms";
+import { IServerConfig } from "../../weblib";
+import { Tools } from "@bettercorp/tools";
 
 export interface UNMSUISPOnEvents {}
 export interface UNMSUISPOnReturnableEvents {}
@@ -32,8 +34,26 @@ export class UISP_UNMS {
   constructor(uSelf: Service) {
     this.uSelf = uSelf;
   }
-  private setupServer(hostname: string, key: string): UNMS {
-    return new UNMS({ hostname, key });
+  private setupServer(
+    hostname: string,
+    key: string,
+    organizationId?: number
+  ): UNMS;
+  private setupServer(serverConfig: IServerConfig): UNMS;
+  private setupServer(
+    serverConfigOrHostname: IServerConfig | string,
+    key?: string,
+    organizationId?: number
+  ): UNMS {
+    return new UNMS(
+      Tools.isString(serverConfigOrHostname) && Tools.isString(key)
+        ? {
+            hostname: serverConfigOrHostname,
+            key,
+            organizationId: organizationId ?? 1,
+          }
+        : (serverConfigOrHostname as IServerConfig)
+    );
   }
   async init(fastify: fastify, config: MyPluginConfig) {
     const self = this;

@@ -122,7 +122,10 @@ export class UCRM implements IUCRM {
     let self = this;
     return new Promise((resolve, reject) => {
       self
-        .webRequest(`/clients`, "POST", undefined, client)
+        .webRequest(`/clients`, "POST", undefined, {
+          ...client,
+          organizationId: this.ServerConfig.organizationId,
+        })
         .then(resolve)
         .catch(reject);
     });
