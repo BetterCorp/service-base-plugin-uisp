@@ -74,7 +74,7 @@ export interface UCRMUISPReturnableEvents {
   crm_getClient(
     hostname: string,
     key: string,
-    id: number,
+    id?: number,
     offset?: number,
     limit?: number
   ): Promise<any>;
@@ -323,7 +323,7 @@ export class UISP_UCRM {
       async (
         hostname: string,
         key: string,
-        id: number,
+        id?: number,
         offset?: number,
         limit?: number
       ) => {

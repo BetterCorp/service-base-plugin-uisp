@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": { "*": ["types/*"] },
+    "paths": {
+      "*": ["types/*"]
+    },
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
@@ -10,11 +12,11 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "declaration": true
+    "declaration": true,
   },
   "linterOptions": {
     "exclude": [
-        "src/plugins/-*/*.*"
+      "src/plugins/-*/*.*"
     ]
   },
   "compileOnSave": true,

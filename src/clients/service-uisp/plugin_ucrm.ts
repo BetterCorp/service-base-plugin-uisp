@@ -11,6 +11,7 @@ import {
 import { RegisteredPlugin } from "@bettercorp/service-base/lib/service/serviceClient";
 import { UISPClient } from "./plugin";
 import { Readable } from "stream";
+import { Tools } from "@bettercorp/tools";
 
 export class UCRMClient {
   //private uSelf: UISPClient;
@@ -149,18 +150,45 @@ export class UCRMClient {
   }
   public async getClient(
     hostname: string,
+    key: string
+  ): Promise<Array<UCRM_Client>>;
+  public async getClient(
+    hostname: string,
     key: string,
-    id: number,
-    offset?: number,
+    offset: number,
+    limit: number
+  ): Promise<Array<UCRM_Client>>;
+  public async getClient(
+    hostname: string,
+    key: string,
+    id: number
+  ): Promise<UCRM_Client>;
+  public async getClient(
+    hostname: string,
+    key: string,
+    idOrOffset?: number,
     limit?: number
-  ): Promise<UCRM_Client> {
+  ): Promise<UCRM_Client | Array<UCRM_Client>> {
+    if (Tools.isNullOrUndefined(idOrOffset))
+      return await this._plugin.emitEventAndReturn(
+        "crm_getClient",
+        hostname,
+        key
+      );
+    if (!Tools.isNullOrUndefined(limit))
+      return await this._plugin.emitEventAndReturn(
+        "crm_getClient",
+        hostname,
+        key,
+        undefined,
+        idOrOffset,
+        limit
+      );
     return await this._plugin.emitEventAndReturn(
       "crm_getClient",
       hostname,
       key,
-      id,
-      offset,
-      limit
+      idOrOffset
     );
   }
   public async setClient(
