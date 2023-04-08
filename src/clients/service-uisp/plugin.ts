@@ -3,7 +3,6 @@ import {
   ServiceCallable,
   ServicesBase,
 } from "@bettercorp/service-base";
-import { MyPluginConfig } from "../../plugins/service-uisp/sec.config";
 import { UISPReturnableEvents } from "../../plugins/service-uisp/plugin";
 import { UCRMClient } from './plugin_ucrm';
 import { UNMSClient } from './plugin_unms';
@@ -13,8 +12,7 @@ export class UISPClient extends ServicesClient<
   ServiceCallable,
   UISPReturnableEvents,
   ServiceCallable,
-  ServiceCallable,
-  MyPluginConfig
+  ServiceCallable
 > {
   public readonly _pluginName: string = "service-uisp";
   public crm!: UCRMClient;

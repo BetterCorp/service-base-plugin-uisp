@@ -1,5 +1,4 @@
 import { ServiceCallable } from "@bettercorp/service-base";
-import { MyPluginConfig } from "../../plugins/service-uisp/sec.config";
 import { UISPReturnableEvents } from "../../plugins/service-uisp/plugin";
 import { RegisteredPlugin } from "@bettercorp/service-base/lib/service/serviceClient";
 import { UISPClient } from "./plugin";
@@ -12,7 +11,7 @@ export class UNMSClient {
     UISPReturnableEvents,
     ServiceCallable,
     ServiceCallable,
-    MyPluginConfig
+    any
   >;
   constructor(
     uSelf: UISPClient,
@@ -22,7 +21,7 @@ export class UNMSClient {
       UISPReturnableEvents,
       ServiceCallable,
       ServiceCallable,
-      MyPluginConfig
+      any
     >
   ) {
     //this.uSelf = uSelf;
