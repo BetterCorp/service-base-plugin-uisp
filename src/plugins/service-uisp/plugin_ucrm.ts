@@ -56,7 +56,9 @@ export interface UCRMUISPReturnableEvents {
   crm_getInvoices(
     config: IServerConfig,
     invoiceId?: number | undefined,
-    clientId?: number | undefined
+    clientId?: number | undefined,
+    offset?: number,
+    limit?: number
   ): Promise<any>;
   crm_getClient(
     config: IServerConfig,
@@ -285,9 +287,11 @@ export class UISP_UCRM {
       async (
         config: IServerConfig,
         invoiceId?: number | undefined,
-        clientId?: number | undefined
+        clientId?: number | undefined,
+        offset?: number,
+        limit?: number
       ) => {
-        return await self.setupServer(config).getInvoices(invoiceId, clientId);
+        return await self.setupServer(config).getInvoices(invoiceId, clientId, offset, limit);
       }
     );
     await self.uSelf.onReturnableEvent(

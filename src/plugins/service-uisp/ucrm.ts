@@ -225,7 +225,12 @@ export class UCRM implements IUCRM {
         .catch(reject);
     });
   }
-  getInvoices(invoiceId?: number, clientId?: number): Promise<Array<any>> {
+  getInvoices(
+    invoiceId?: number,
+    clientId?: number,
+    offset?: number,
+    limit?: number
+  ): Promise<Array<any>> {
     let self = this;
     return new Promise((resolve, reject) => {
       self
@@ -233,11 +238,11 @@ export class UCRM implements IUCRM {
           clientId !== undefined &&
             clientId !== null &&
             (invoiceId === undefined || invoiceId === null)
-            ? `/invoices?clientId=${clientId}&limit=10000`
+            ? `/invoices?clientId=${clientId}&offset=${offset??0}limit=${limit??100}`
             : `/invoices${
                 invoiceId !== undefined && invoiceId !== null
-                  ? `/${invoiceId}?limit=10000`
-                  : "?limit=10000"
+                  ? `/${invoiceId}?offset=${offset??0}limit=${limit??100}`
+                  : `?offset=${offset??0}limit=${limit??100}`
               }`,
           "GET"
         )

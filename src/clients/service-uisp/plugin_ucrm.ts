@@ -124,13 +124,17 @@ export class UCRMClient {
   public async getInvoices(
     config: IServerConfig,
     invoiceId?: number | undefined,
-    clientId?: number | undefined
+    clientId?: number | undefined,
+    offset?: number,
+    limit?: number
   ): Promise<any> {
     return await this._plugin.emitEventAndReturn(
       "crm_getInvoices",
       config,
       invoiceId,
-      clientId
+      clientId,
+      offset,
+      limit
     );
   }
   public async getClient(config: IServerConfig): Promise<Array<UCRM_Client>>;
