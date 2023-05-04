@@ -238,11 +238,11 @@ export class UCRM implements IUCRM {
           clientId !== undefined &&
             clientId !== null &&
             (invoiceId === undefined || invoiceId === null)
-            ? `/invoices?clientId=${clientId}&offset=${offset??0}limit=${limit??100}`
+            ? `/invoices?clientId=${clientId}&offset=${offset??0}&limit=${limit??100}`
             : `/invoices${
                 invoiceId !== undefined && invoiceId !== null
-                  ? `/${invoiceId}?offset=${offset??0}limit=${limit??100}`
-                  : `?offset=${offset??0}limit=${limit??100}`
+                  ? `/${invoiceId}?offset=${offset??0}&limit=${limit??100}`
+                  : `?offset=${offset??0}&limit=${limit??100}`
               }`,
           "GET"
         )
