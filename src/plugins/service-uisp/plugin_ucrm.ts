@@ -13,10 +13,10 @@ import { MyPluginConfig } from "./sec.config";
 import { IServerConfig } from "../../weblib";
 
 export interface UCRMUISPOnEvents {
-  onEvent(clientKey: string, event: any): Promise<void>;
+  crm_onEvent(clientKey: string, event: any): Promise<void>;
 }
 export interface UCRMUISPOnReturnableEvents {
-  verifyServer(clientKey: string): Promise<boolean>;
+  crm_verifyServer(clientKey: string): Promise<boolean>;
 }
 export interface UCRMUISPReturnableEvents {
   //crmGetInvoicePDF(clientId: string, invoiceId: string, onStream: { (stream: Readable): Promise<void>; }): Promise<any>;
@@ -197,7 +197,7 @@ export class UISP_UCRM {
             CleanStringStrength.soft
           );
           let knownServer = await self.uSelf.emitEventAndReturnTimed(
-            "verifyServer",
+            "crm_verifyServer",
             5,
             clientKey
           );
@@ -206,7 +206,7 @@ export class UISP_UCRM {
             return;
           }
 
-          await self.uSelf.emitEvent("onEvent", clientKey, body);
+          await self.uSelf.emitEvent("crm_onEvent", clientKey, body);
           reply.status(200).send();
         }
       );

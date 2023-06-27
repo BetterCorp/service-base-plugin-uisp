@@ -12,14 +12,18 @@ import { UISPClient } from "./plugin";
 import { Readable } from "stream";
 import { Tools } from "@bettercorp/tools";
 import { IServerConfig } from "../../weblib";
+import {
+  UCRMUISPOnEvents,
+  UCRMUISPOnReturnableEvents,
+} from "../../plugins/service-uisp/plugin_ucrm";
 
 export class UCRMClient {
   //private uSelf: UISPClient;
   private _plugin: RegisteredPlugin<
     ServiceCallable,
-    ServiceCallable,
+    UCRMUISPOnEvents,
     UISPReturnableEvents,
-    ServiceCallable,
+    UCRMUISPOnReturnableEvents,
     ServiceCallable,
     any
   >;
@@ -27,9 +31,9 @@ export class UCRMClient {
     uSelf: UISPClient,
     _plugin: RegisteredPlugin<
       ServiceCallable,
-      ServiceCallable,
+      UCRMUISPOnEvents,
       UISPReturnableEvents,
-      ServiceCallable,
+      UCRMUISPOnReturnableEvents,
       ServiceCallable,
       any
     >
@@ -344,5 +348,15 @@ export class UCRMClient {
       clientId,
       streamId
     );
+  }
+  public async onVerifyServer(listener: {
+    (clientKey: string): Promise<boolean>;
+  }) {
+    return await this._plugin.onReturnableEvent("crm_verifyServer", listener);
+  }
+  public async onEvent(listener: {
+    (clientKey: string, event: any): Promise<void>;
+  }) {
+    return await this._plugin.onEvent("crm_onEvent", listener);
   }
 }
